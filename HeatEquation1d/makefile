@@ -30,8 +30,8 @@ $(OBJECT_DIR)/%.o : %.c | $(OBJECT_DIR)
 
 # Dependency Rules
 $(OBJECT_DIR)/MainHeatEquation1d.o : MainHeatEquation1d.c matrix.h finiteElement.h
-$(OBJECT_DIR)/MainHeatEquation1d.o : finiteElement.c finiteElement.h matrix.c matrix.h
-$(OBJECT_DIR)/MainHeatEquation1d.o : matrix.c matrix.h
+$(OBJECT_DIR)/finiteElement.o : finiteElement.c finiteElement.h
+$(OBJECT_DIR)/matrix.o : matrix.c matrix.h
 
 # Cleaning files
 REBUILDABLES = $(OBJS) $(LINK_TARGET)

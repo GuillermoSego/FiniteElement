@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     int NNodes_Elemento = 2; // Nodos por elemento
 
     double* nodos = malloc(NNodes * sizeof(double)); // Arreglo para almacenar las coordenadas de los nodos
-    int** elementos = malloc( NElements * sizeof(int)); // Matriz para almacenar la conexión entre nodos para cada elemento
+    int** elementos = malloc( NElements * sizeof(int *)); // Matriz para almacenar la conexión entre nodos para cada elemento
 
     for (int i = 0; i < NElements; i++) {
         // Asigna memoria para cada columna de esta fila
@@ -166,7 +166,7 @@ int main(int argc, char *argv[]){
     double* FElemental = malloc( NNodes_Elemento * sizeof(double));
 
     // Vector F
-    double* F = malloc( NNodes * sizeof(double));
+    double* F = calloc( NNodes, sizeof(double));
 
     // Valor de Q. Calor emanado por la barra
     double Q = 5.0;
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]){
     }
 
     // Condiciones de Dirichlet y Neumann
-    BoundaryConditions *bc = readConditions("CondFrontera1d.txt");
+    // BoundaryConditions *bc = readConditions("CondFrontera1d.txt");
 
     // if (bc != NULL) {
     //     for (int i = 0; i < 2; i++) {
@@ -265,11 +265,11 @@ int main(int argc, char *argv[]){
 
 
 
-    // printf("Matrix de rigidez\n");
-    // MatrixShow(NNodes, NNodes, K);
+    printf("Matrix de rigidez\n");
+    MatrixShow(NNodes, NNodes, K);
 
-    // printf("Vector de fuerzas\n");
-    // VectorShow(NNodes, 1, F);
+    printf("Vector de fuerzas\n");
+    VectorShow(NNodes, 1, F);
 
     // Liberar la memoria
     for (int i = 0; i < NElements; i++) {
