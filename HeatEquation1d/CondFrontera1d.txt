@@ -1,0 +1,6 @@
+No. Conditions
+2
+Condiciones Dirichlet
+0, 4
+Condiciones Neumann
+None, None
