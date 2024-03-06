@@ -1,6 +1,6 @@
 No. Conditions
 2
 Condiciones Dirichlet
-0, 4
+0, 0
 Condiciones Neumann
 None, None

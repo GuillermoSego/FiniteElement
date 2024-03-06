@@ -96,20 +96,26 @@ BoundaryConditions* readConditions(const char *filename) {
     }
 
     // Leer el número de condiciones
-    fgets(line, sizeof(line), file);
+    fgets(line, sizeof(line), file); // Linea de no de condiciones
+    fgets(line, sizeof(line), file); // Linea del número
     sscanf(line, "%d", &numConditions);
+    // printf("No condiciones: %d\n", numConditions);
 
     // Leer y procesar las condiciones de Dirichlet
     fgets(line, sizeof(line), file); // Leer la línea "Condiciones Dirichlet"
+    // printf("Leído: %s\n", line);
     fgets(line, sizeof(line), file); // Leer la línea con las condiciones
+    // printf("Leído: %s\n", line);
     line[strcspn(line, "\r\n")] = 0;  // Elimina el final de línea
+
+    // printf("Lectura de condiciones\n");
 
     for (int i = 0; i < 2; i++) {
         char *token = (i == 0) ? strtok(line, ",") : strtok(NULL, ",");
         if (token == NULL) {
             break; // No hay más tokens
         }
-        printf("Leído: %s\n", token); // Después de leer una línea
+        // printf("Leído: %s\n", token); // Después de leer una línea
         if (strcmp(token, "None") == 0) {
             bc->dirichletValid[i] = false;
         } else {

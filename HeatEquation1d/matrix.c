@@ -509,78 +509,78 @@ double *FlattenMatrix(double **matrix, int rows, int cols) {
     return flat;
 }
 
-// // Rutina que implementa el metodo del gradiente
-// void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols){
-//     double error_threshold = 0.0001;
-//     double alpha, beta, r_dot, r_next_dot;
+// Rutina que implementa el metodo del gradiente
+void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols){
+    double error_threshold = 0.0001;
+    double alpha, beta, r_dot, r_next_dot;
 
-//     double *r = (double *)malloc(rows * sizeof(double));
-//     double *r_next = (double *)malloc(rows * sizeof(double));
-//     double *p = (double *)malloc(rows * sizeof(double));
-//     double *Ap = (double *)malloc(rows * sizeof(double));
+    double *r = (double *)malloc(rows * sizeof(double));
+    double *r_next = (double *)malloc(rows * sizeof(double));
+    double *p = (double *)malloc(rows * sizeof(double));
+    double *Ap = (double *)malloc(rows * sizeof(double));
 
-//     // r_0 = B - A*x_0
-//     double *Ax = (double *)malloc(rows * sizeof(double));
-//     MatrixProduct(A, x, Ax, rows, cols, 1);
-//     for(int i = 0; i < rows; i++) {
-//         r[i] = B[i] - Ax[i];
-//     }
+    // r_0 = B - A*x_0
+    double *Ax = (double *)malloc(rows * sizeof(double));
+    VectorProduct(A, x, Ax, rows, cols, 1);
+    for(int i = 0; i < rows; i++) {
+        r[i] = B[i] - Ax[i];
+    }
 
-//     for(int i = 0; i < rows; i++){
-//         p[i] = r[i];  // p_0 = r_0
-//     }
+    for(int i = 0; i < rows; i++){
+        p[i] = r[i];  // p_0 = r_0
+    }
 
-//     int max_iterations = rows; 
-//     for(int k = 0; k < max_iterations; k++){
+    int max_iterations = rows; 
+    for(int k = 0; k < max_iterations; k++){
 
-//         MatrixProduct(A, p, Ap, rows, cols, 1);
+        VectorProduct(A, p, Ap, rows, cols, 1);
 
-//         r_dot = DotProd(r, r, rows);
-//         alpha = r_dot / DotProd(p, Ap, rows);
+        r_dot = DotProd(r, r, rows);
+        alpha = r_dot / DotProd(p, Ap, rows);
 
-//         for(int i = 0; i < rows; i++){
-//             x[i] += alpha * p[i];
-//             r_next[i] = r[i] - alpha * Ap[i];
-//         }
+        for(int i = 0; i < rows; i++){
+            x[i] += alpha * p[i];
+            r_next[i] = r[i] - alpha * Ap[i];
+        }
 
-//         r_next_dot = DotProd(r_next, r_next, rows);
-//         if(sqrt(r_next_dot) < error_threshold){
-//             break;
-//             printf("El método convergió con %d iteraciones\n", k);
-//         }
+        r_next_dot = DotProd(r_next, r_next, rows);
+        if(sqrt(r_next_dot) < error_threshold){
+            break;
+            printf("El método convergió con %d iteraciones\n", k);
+        }
 
-//         beta = r_next_dot / r_dot;
-//         for(int i = 0; i < rows; i++){
-//             p[i] = r_next[i] + beta * p[i];
-//             r[i] = r_next[i];
-//         }
-//     }
+        beta = r_next_dot / r_dot;
+        for(int i = 0; i < rows; i++){
+            p[i] = r_next[i] + beta * p[i];
+            r[i] = r_next[i];
+        }
+    }
 
-//     free(r);
-//     free(r_next);
-//     free(p);
-//     free(Ap);
-//     free(Ax);
-// }
+    free(r);
+    free(r_next);
+    free(p);
+    free(Ap);
+    free(Ax);
+}
 
-// // Rutina que indica si un vector X es solución de un sistema Ax = b
-// int isSolution(double *A, double *X, double *b, int size, double tolerance) {
-//     double *AX = malloc(size * sizeof(double));
+// Rutina que indica si un vector X es solución de un sistema Ax = b
+int isSolution(double *A, double *X, double *b, int size, double tolerance) {
+    double *AX = malloc(size * sizeof(double));
 
-//     // Calcular AX
-//     MatrixProduct(A, X, AX, size, size, 1);
+    // Calcular AX
+    VectorProduct(A, X, AX, size, size, 1);
 
-//     // Comparar AX con b
-//     for (int i = 0; i < size; i++) {
-//         if (fabs(AX[i] - b[i]) > tolerance) {
-//             free(AX);
-//             return 1;  // Si alguna componente difiere de la tolerancia, X no es solución
-//         }
-//     }
+    // Comparar AX con b
+    for (int i = 0; i < size; i++) {
+        if (fabs(AX[i] - b[i]) > tolerance) {
+            free(AX);
+            return 1;  // Si alguna componente difiere de la tolerancia, X no es solución
+        }
+    }
 
-//     free(AX);
-//     return 0;  // Si todas las componentes son cercanas, X es solución
-// }
+    free(AX);
+    return 0;  // Si todas las componentes son cercanas, X es solución
+}
 
 // double ConditionCheck(double ta[], double td[], int n)
 // {
@@ -621,141 +621,56 @@ void Matrix_Initialize(double** A, int size){
     }
 }
 
-// // Función para resolver un sistema Ax = b dado L en la descomposición Cholesky A = LL^T
-// void solveCholesky(double L[], double b[], double x[], int n) {
-//     // Resolvemos Ly = b para y
-//     double y[n];
-//     for (int i = 0; i < n; i++) {
-//         double sum = 0;
-//         for (int j = 0; j < i; j++) {
-//             sum += L[i * n + j] * y[j];
-//         }
-//         y[i] = (b[i] - sum) / L[i * n + i];
-//     }
+// Función para resolver un sistema Ax = b dado L en la descomposición Cholesky A = LL^T
+void solveCholesky(double L[], double b[], double x[], int n) {
+    // Resolvemos Ly = b para y
+    double y[n];
+    for (int i = 0; i < n; i++) {
+        double sum = 0;
+        for (int j = 0; j < i; j++) {
+            sum += L[i * n + j] * y[j];
+        }
+        y[i] = (b[i] - sum) / L[i * n + i];
+    }
 
-//     // Resolvemos L^Tx = y para x
-//     for (int i = n - 1; i >= 0; i--) {
-//         double sum = 0;
-//         for (int j = i + 1; j < n; j++) {
-//             sum += L[j * n + i] * x[j]; // Notar que estamos accediendo a L^T
-//         }
-//         x[i] = (y[i] - sum) / L[i * n + i];
-//     }
-// }
+    // Resolvemos L^Tx = y para x
+    for (int i = n - 1; i >= 0; i--) {
+        double sum = 0;
+        for (int j = i + 1; j < n; j++) {
+            sum += L[j * n + i] * x[j]; // Notar que estamos accediendo a L^T
+        }
+        x[i] = (y[i] - sum) / L[i * n + i];
+    }
+}
 
-// // Función para realizar la factorización de Cholesky (A = L * L^T)
-// int cholesky(double A[], double L[], int n) {
-//     // Iteramos a través de cada fila y columna para llenar L
-//     for (int i = 0; i < n; i++) {
-//         for (int j = 0; j <= i; j++) {
-//             double sum = 0;
+// Función para realizar la factorización de Cholesky (A = L * L^T)
+int cholesky(double A[], double L[], int n) {
+    // Iteramos a través de cada fila y columna para llenar L
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j <= i; j++) {
+            double sum = 0;
 
-//             // Si estamos en la misma fila y columna (diagonal)
-//             if (j == i) {
-//                 for (int k = 0; k < j; k++) {
-//                     sum += L[j * n + k] * L[j * n + k];
-//                 }
+            // Si estamos en la misma fila y columna (diagonal)
+            if (j == i) {
+                for (int k = 0; k < j; k++) {
+                    sum += L[j * n + k] * L[j * n + k];
+                }
 
-//                 // La raíz cuadrada podría fallar si la matriz no es definida positiva
-//                 double diagonalElement = A[i * n + i] - sum;
-//                 if (diagonalElement <= 0) {
-//                     return -1; // Devolvemos -1 si hay un error (matriz no es definida positiva)
-//                 }
-//                 L[i * n + j] = sqrt(diagonalElement);
-//             } else {
-//                 // Si estamos en diferentes filas y columnas
-//                 for (int k = 0; k < j; k++) {
-//                     sum += (L[i * n + k] * L[j * n + k]);
-//                 }
-//                 L[i * n + j] = (A[i * n + j] - sum) / L[j * n + j];
-//             }
-//         }
-//     }
-//     return 0; // Todo bien
-// }
+                // La raíz cuadrada podría fallar si la matriz no es definida positiva
+                double diagonalElement = A[i * n + i] - sum;
+                if (diagonalElement <= 0) {
+                    return -1; // Devolvemos -1 si hay un error (matriz no es definida positiva)
+                }
+                L[i * n + j] = sqrt(diagonalElement);
+            } else {
+                // Si estamos en diferentes filas y columnas
+                for (int k = 0; k < j; k++) {
+                    sum += (L[i * n + k] * L[j * n + k]);
+                }
+                L[i * n + j] = (A[i * n + j] - sum) / L[j * n + j];
+            }
+        }
+    }
+    return 0; // Todo bien
+}
 
-// // Esta rutina calcula el metodo de potencias.
-// void PowerMethod(double M[], double U[], double l[], int ST)
-// {
-
-//     // Inicializamos las matrices
-//     // Asignamos memoria en el heap para nuestras matrices
-//     double* St = (double*) malloc(ST * sizeof(double));
-//     double* t = (double*) malloc(ST * sizeof(double));
-//     double* nt = (double*) malloc(ST * sizeof(double));
-//     double* v = (double*) malloc(ST * sizeof(double));
-//     double* vprime = (double*) malloc(ST * sizeof(double));
-//     double* vvp = (double*) malloc(ST * ST * sizeof(double));
-//     double* Snew = (double*) malloc(ST * ST * sizeof(double));
-
-//     // Apuntamos
-//     double* lPtr = l;
-//     double* UPtr = U;
-
-//     // Declaramos un nuevo vector en el que guardaremos la nueva S
-//     Divide(M, 1, Snew, ST*ST);
-
-
-//     int i = 0, j = 0, k; 
-
-//     do {
-
-//         // Calculamos St = sum(S)
-//         Sum(Snew,St, ST);
-//         // Incializamos la matriz de unos
-//         Ones(t, ST);
-
-//         do {
-          
-//           // nt = St/max(St)
-//           Divide(St, maximus(St, ST), nt, ST);
-
-//           // Condicion de paro
-//           k = ConditionCheck(t, nt, ST);
-//           if (k == 1) {
-//             break;
-
-//           }
-
-//           // t = nt
-//           MatrixT(ST, 1, nt, t);
-//           // St = S*t
-//           VectorProduct(Snew, t, St, ST, ST, 1);
-//           j ++;
-
-//         } while(j<1000);
-
-//         // Calculamos las U(:,i) = t/norm(t)
-//         Divide(t, sqrt(DotProd(t, t, ST)), UPtr, ST);
-
-//         // Calculamos las v(:,i) = sqrt(max(St)) * U(:,i)
-//         Divide(UPtr, 1/sqrt(maximus(St, ST)), v, ST);
-
-//         // Calculamos las l(i) = max(St)
-//         *lPtr = maximus(St, ST);
-
-//         // Redefinimos la matriz S = S - v(:,i)*v(:,i)'
-//         MatrixT( ST, 1, v, vprime );
-//         MatrixProduct( v, vprime, vvp, ST, 1, ST );
-//         // Copiamos la version de la matriz Snew en Scov
-//         // Divide(Snew, 1, M, ST*ST);
-//         MatrixSum(Snew, vvp, Snew, ST);
-
-//         UPtr += ST;
-//         lPtr ++;
-
-//         j = 0;
-//         i++;
-
-//     } while(i<ST);
-
-//     // Libera la memoria
-//     free(St);
-//     free(t);
-//     free(nt);
-//     free(v);
-//     free(vprime);
-//     free(vvp);
-//     free(Snew);
-
-// }

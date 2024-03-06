@@ -69,20 +69,19 @@ void freeMatrix(double **matrix, int rows);
 // Rutina para aplanar una matriz
 double *FlattenMatrix(double **matrix, int rows, int cols);
 
-// void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols);
+// Rutina que implementa el metodo del gradiente
+void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols);
 
-// int isSolution(double *A, double *X, double *b, int size, double tolerance);
+// Rutina que indica si un vector X es solución de un sistema Ax = b
+int isSolution(double *A, double *X, double *b, int size, double tolerance);
 
 // double ConditionCheck(double ta[], double td[], int n);
 
 // Incializar una matriz cuadrada en ceros
 void Matrix_Initialize(double** A, int size);
 
-// // Función para resolver un sistema Ax = b dado L en la descomposición Cholesky A = LL^T
-// void solveCholesky(double L[], double b[], double x[], int n);
+// Función para resolver un sistema Ax = b dado L en la descomposición Cholesky A = LL^T
+void solveCholesky(double L[], double b[], double x[], int n);
 
-// // Función para realizar la factorización de Cholesky (A = L * L^T)
-// int cholesky(double A[], double L[], int n);
-
-// // Esta rutina calcula el metodo de potencias.
-// void PowerMethod(double M[], double U[], double l[], int ST);
+// Función para realizar la factorización de Cholesky (A = L * L^T)
+int cholesky(double A[], double L[], int n);

@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
     */
 
     // Declaración de variables del sistema
-    int NElements = 4; // Número de elementos es siempre NNodes - 1 para una malla 1D
+    int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
     int NNodes = NElements + 1; // Número de nodos
     int dim = 1;
     int NNodes_Elemento = 2; // Nodos por elemento
@@ -171,6 +171,9 @@ int main(int argc, char *argv[]){
     // Valor de Q. Calor emanado por la barra
     double Q = 5.0;
 
+    // Definimos el vector solución Phi
+    double* Phi = calloc( NNodes, sizeof(double));
+
     /*
     Paso 5. Ensamble
     Las expresiones obtenidas para cada elemento se ensamblan en un sistema de ecuaciones 
@@ -240,9 +243,20 @@ int main(int argc, char *argv[]){
 
     }
 
-    // Condiciones de Dirichlet y Neumann
-    // BoundaryConditions *bc = readConditions("CondFrontera1d.txt");
+    // printf("Matrix de rigidez\n");
+    // MatrixShow(NNodes, NNodes, K);
 
+    // printf("Vector de fuerzas\n");
+    // VectorShow(NNodes, 1, F);
+
+    /*
+    Paso 6. Aplicación de las condiciones de contorno
+    */
+
+    // Leemos las condiciones de Dirichlet y Neumann
+    BoundaryConditions *bc = readConditions("CondFrontera1d.txt");
+
+    // Mostrar las condiciones
     // if (bc != NULL) {
     //     for (int i = 0; i < 2; i++) {
     //         if (bc->dirichletValid[i]) {
@@ -260,16 +274,94 @@ int main(int argc, char *argv[]){
     //         }
     //     }
 
-    //     free(bc); // No olvides liberar la memoria asignada
     // }
 
+    // Aplicación de las condiciones de contorno
+    if (bc != NULL) {
+        // Aplicación de condiciones de Dirichlet
+        for (int i = 0; i < 2; i++) {
+            if (bc->dirichletValid[i]) {
+                // Aplicar en el inicio (i=0) o al final (i=1) del dominio
+                int index = (i == 0) ? 0 : NNodes-1;
+                for (int j = 0; j < NNodes; j++) {
+                    K[index][j] = 0.0;  // Poner la fila correspondiente de la matriz K en 0
+                    K[j][index] = 0.0;  // Poner la columna correspondiente de la matriz K en 0
+                }
+                K[index][index] = 1.0;  // Establecer la diagonal en 1 para mantener la solución
+                F[index] = bc->dirichlet[i];  // Establecer el valor en el vector de solución
+            } else {
+                // printf("Condición Dirichlet %d: None\n", i);
+            }
+        }
+
+        // Aplicación de condiciones de Neumann
+        for (int i = 0; i < 2; i++) {
+        if (bc->neumannValid[i]) {
+            // Aplicar en el inicio (i=0) o al final (i=1) del dominio
+            int index = (i == 0) ? 0 : NNodes-1;
+                // Si la condición de Neumann es en el inicio, se suma el valor al vector F
+                if (i == 0) {
+                    F[index] += bc->neumann[i]; // Sumar al inicio
+                } else { // Si es al final, puede que necesites restarlo, dependiendo de tu formulación específica
+                    F[index] -= bc->neumann[i]; // Restar al final
+                }
+            } else {
+                // printf("Condición Neumann %d: None\n", i);
+            }
+        }
+
+    }
+
+    // printf("Matrix de rigidez\n");
+    // MatrixShow(NNodes, NNodes, K);
+
+    // printf("Vector solución\n");
+    // VectorShow(NNodes, 1, Phi);
+
+    // printf("Vector de fuerzas\n");
+    // VectorShow(NNodes, 1, F);
 
 
-    printf("Matrix de rigidez\n");
-    MatrixShow(NNodes, NNodes, K);
+    /*
+    Paso 7. Solución
+    Utilizamos un método numérico para resolver el sistema K phi = F. Es un clásico
+    problema Ax = b. Podemos utilizar métodos directos como iterativos. Al tener matrices
+    sparse, es mejor utilizar métodos iterativos por el costo computacional. 
+    */
 
-    printf("Vector de fuerzas\n");
-    VectorShow(NNodes, 1, F);
+    // Necesitamos aplanar la matriz
+    double* KFlat = FlattenMatrix(K, NNodes, NNodes);
+
+    // Método del gradiente conjugado
+    Conjugate_gradient(KFlat, F, Phi, NNodes, NNodes);
+
+    // Método de Cholesky
+    // double* L = calloc(NNodes, sizeof(double));
+
+    // if (cholesky(KFlat, L, NNodes) == -1) {
+    //     printf("Error durante la factorización\n");
+    //     return -1;
+    // }
+
+    // solveCholesky(L, F, Phi, NNodes);
+
+    // Checar si tenemos solución
+    double tolerance = 1e-1;  // Define umbral de tolerancia
+    int control = isSolution(KFlat, F, Phi, NNodes, tolerance);
+
+    if (control == 0 ) {
+        printf("X es solución de AX = b.\n");
+    } else {
+        printf("X no es solución de AX = b.\n");
+    }
+
+    printf("La solución del sistema\n");
+    VectorShow(NNodes, 1, Phi);
+
+    /*
+    Paso 8. Cálculo de los flujos q
+    Calculamos los flujos como promedios.
+    */
 
     // Liberar la memoria
     for (int i = 0; i < NElements; i++) {
@@ -286,6 +378,10 @@ int main(int argc, char *argv[]){
     free(conect);
     free(FElemental);
     free(F);
+    free(Phi);
+    free(bc);
+    
+    // free(L);
 
     return 0;
 }
