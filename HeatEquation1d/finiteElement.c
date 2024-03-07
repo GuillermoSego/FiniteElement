@@ -52,7 +52,7 @@ double detJacobian1d(double x1, double x2){
 }
 
 // Construcción de la matriz B para un elemento
-void BuildB1d(double** B, double *DNDE, double x1, double x2, int dim, int NElements){
+void BuildB1d(double** B, double **DNDE, double x1, double x2, int dim, int NElements){
 
     double InvJac = 0; 
     // Llenado de la matriz B para un elemento
@@ -61,14 +61,14 @@ void BuildB1d(double** B, double *DNDE, double x1, double x2, int dim, int NElem
         for (int j = 0; j < NElements; j++)
         {
             InvJac = invjacobian1d(x1, x2);
-            B[i][j] = InvJac * DNDE[j]; // Las derivadas ya están evaluadas en los Gauss P
+            B[i][j] = InvJac * DNDE[i][j]; // Las derivadas ya están evaluadas en los Gauss P
         }
     }
 
 }
 
 // Construcción del vector F para un elemento con Q constante
-void BuildF1d(double* F, double* N, double Q, double x1, double x2, int NElements ){
+void BuildF1d(double* F, double** N, double Q, double x1, double x2, int NElements ){
 
     double detJac = 0;
 
@@ -78,7 +78,7 @@ void BuildF1d(double* F, double* N, double Q, double x1, double x2, int NElement
         detJac = detJacobian1d(x1, x2);
 
         // Calculamos el valor del vector F elemental
-        F[i] = N[i]*Q*detJac;
+        F[i] = N[0][i]*Q*detJac;
     }
 }
 

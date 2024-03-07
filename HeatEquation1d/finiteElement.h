@@ -20,10 +20,10 @@ double invjacobian1d(double x1, double x2);
 double detJacobian1d(double x1, double x2);
 
 // Construcción de la matriz B para un elemento
-void BuildB1d(double** B, double *DNDE, double x1, double x2, int dim, int NElements);
+void BuildB1d(double** B, double **DNDE, double x1, double x2, int dim, int NElements);
 
 // Construcción del vector F para un elemento con Q constante
-void BuildF1d(double* F, double* N, double Q, double x1, double x2, int NElements );
+void BuildF1d(double* F, double** N, double Q, double x1, double x2, int NElements );
 
 // Estructura para almacenar las condiciones de Dirichlet y Neumann
 typedef struct {

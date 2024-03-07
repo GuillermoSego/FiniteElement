@@ -22,6 +22,8 @@ int main(int argc, char *argv[]){
     const char* filename_Nodes = argv[1];
     const char* filename_Connections = argv[2];
     
+    #pragma region Paso 1. Formulación del problema.
+
     /*
     Necesitamos escanear los archivos de la malla generada y definir el problema.
     Utilizamos memoria dinámica para trabajar con los vectores que no conocemos. 
@@ -32,7 +34,7 @@ int main(int argc, char *argv[]){
     */
 
     // Declaración de variables del sistema
-    int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
+    int NElements = 4; // Número de elementos es siempre NNodes - 1 para una malla 1D
     int NNodes = NElements + 1; // Número de nodos
     int dim = 1;
     int NNodes_Elemento = 2; // Nodos por elemento
@@ -44,6 +46,10 @@ int main(int argc, char *argv[]){
         // Asigna memoria para cada columna de esta fila
         elementos[i] = malloc(NNodes_Elemento * sizeof(int));
     }
+
+    #pragma endregion
+
+    #pragma region Paso 2. Discretización del dominio.
 
     /*
     Paso 2. Discretización del dominio. Generación de la Malla
@@ -79,6 +85,10 @@ int main(int argc, char *argv[]){
 
     // La estructura de la matriz de conectividades es elemento[Número de elemento][Número de nodo]
     
+    #pragma endregion
+
+    #pragma region Paso 3. Funciones de forma.
+
     /*
     Paso 3. Funciones de forma.
     Para cada elemento, definimos funciones de forma (también llamadas funciones de interpolación) 
@@ -102,22 +112,29 @@ int main(int argc, char *argv[]){
     double xi = 0.0; // Punto de Gauss
 
     // Evaluar las funciones en los puntos de gauss
-    double* NEval = malloc(NNodes_Elemento*sizeof(double));
+    double **NEval = createMatrix(dim, NNodes_Elemento);
     for (int i = 0; i < NNodes_Elemento; i++) {
-        NEval[i] = N[i](xi); 
+        NEval[0][i] = N[i](xi); 
     }
 
+    double **NEvalT = createMatrix(NNodes_Elemento, dim);
+    MatrixT(dim, NNodes_Elemento, NEval, NEvalT);
+
     // Vector para almacenar los valores de las derivadas evaluadas en los puntos de Gauss
-    double* DNDE = malloc(NNodes_Elemento*sizeof(double));
+    double **DNDE = createMatrix(dim, NNodes_Elemento);
 
     for (int i = 0; i < NNodes_Elemento; i++) {
-        DNDE[i] = dN_dxi[i](xi); // Calcular y almacenar las derivadas
+        DNDE[0][i] = dN_dxi[i](xi); // Calcular y almacenar las derivadas
     }
 
     // printf("Las derivadas de las funciones de forma \n");
     // for (int i = 0; i < NNodes_Elemento; i++){
-    //     printf("%lf \n", DNDE[i]);
+    //     printf("%lf \n", DNDE[0][i]);
     // }
+
+    #pragma endregion
+
+    #pragma region Paso 4 y 5. Construcción de matrices y ensamble 
 
     /*
     Paso 4. Transformamos la ecuación diferencial en su forma débil. Esto implica multiplicar 
@@ -249,6 +266,10 @@ int main(int argc, char *argv[]){
     // printf("Vector de fuerzas\n");
     // VectorShow(NNodes, 1, F);
 
+    #pragma endregion
+
+    #pragma region Paso 6. Aplicación de las condiciones de contorno
+
     /*
     Paso 6. Aplicación de las condiciones de contorno
     */
@@ -321,6 +342,9 @@ int main(int argc, char *argv[]){
     // printf("Vector de fuerzas\n");
     // VectorShow(NNodes, 1, F);
 
+    #pragma endregion
+
+    #pragma region Paso 7. Solución sistema K Phi = F
 
     /*
     Paso 7. Solución
@@ -346,22 +370,145 @@ int main(int argc, char *argv[]){
     // solveCholesky(L, F, Phi, NNodes);
 
     // Checar si tenemos solución
-    double tolerance = 1e-1;  // Define umbral de tolerancia
-    int control = isSolution(KFlat, F, Phi, NNodes, tolerance);
+    // double tolerance = 1e-3;  // Define umbral de tolerancia
+    // int control = isSolution(KFlat, Phi, F, NNodes, tolerance);
 
-    if (control == 0 ) {
-        printf("X es solución de AX = b.\n");
-    } else {
-        printf("X no es solución de AX = b.\n");
-    }
+    // if (control == 0 ) {
+    //     printf("La solución encontrada es correcta\n");
+    // } else {
+    //     printf("La solución encontrada no es correcta.\n");
+    // }
 
-    printf("La solución del sistema\n");
-    VectorShow(NNodes, 1, Phi);
+    // printf("La solución del sistema\n");
+    // VectorShow(NNodes, 1, Phi);
+
+    #pragma endregion
+
+    #pragma region Paso 8. Cálculo de los flujos q en los nodos
 
     /*
-    Paso 8. Cálculo de los flujos q
-    Calculamos los flujos como promedios.
+    Paso 8. Cálculo de los flujos q en los nodos
+    Calculamos los flujos en cada nodo. Para esto primero tenemos que calcular los flujos 
+    en los puntos de Gauss. Con eso ensamblamos la matriz de masa M elemental y el vector
+    p elemental de promedios. Resolvemos y encontramos los flujos en los nodos. Es un pro-
+    ceso análogo al realizado cuando resolvimos el sistema por elementos finitos.
     */
+
+    
+    // Inicializamos M y M elemental
+    double** MElemental = createMatrix(NNodes_Elemento, NNodes_Elemento);
+    double** M = createMatrix(NNodes, NNodes);
+    Matrix_Initialize(M, NNodes); // Inicializamos a cero
+
+    // Inicializamos P y P elemental
+    double* PElemental = malloc( NNodes_Elemento * sizeof(double));
+    double* P = calloc( NNodes, sizeof(double));
+
+    // Phi elemental
+    double* PhiElemental = malloc(NNodes_Elemento * sizeof(double));
+
+    // q en los puntos de gauss
+    double* q_gp = malloc(dim * sizeof(double));
+    double* BFlat = malloc(NNodes_Elemento * dim * sizeof(double));
+    double* NEvalTFlat = malloc(NNodes_Elemento * dim * sizeof(double));
+
+    // q en los nodos
+    double* q = calloc( NNodes, sizeof(double));
+
+    // Nuevamente iteramos sobre el total de los elementos
+    for (int k = 0; k<NElements; k++){
+
+        // Nos movemos en cada elemento y cada nodo calculando MElemental         
+        for(int w = 0; w<NNodes_Elemento; w++){
+            conect[w] = elementos[k][w]; // Encontrar las conectividades
+        }
+
+        // Coordenadas de los nodos 
+        x1 = nodos[conect[0] - 1];
+        x2 = nodos[conect[1] - 1];
+        // printf("%lf, %lf\n", x1, x2);
+
+        // Calculo de la matriz M elemental
+        MatrixProduct(NEvalT, NEval, MElemental, NNodes_Elemento, dim, NNodes_Elemento);
+
+        // Multiplicación por el determinante del jacobiano
+        MatriXEscalar(MElemental, detJacobian1d(x1, x2), NNodes_Elemento, NNodes_Elemento);
+
+        // printf("Iteración %d\n", k);
+        // MatrixShow(NNodes_Elemento, NNodes_Elemento, MElemental);
+
+        // printf("Matriz elemental \n");
+        // Ensamblaje de la matriz de masa
+        for(int i = 0; i<NNodes_Elemento; i++){
+            for(int j = 0; j<NNodes_Elemento; j++){
+                // printf("Valores conect %d, %d\n", conect[i] - 1, conect[j] - 1);
+                M[conect[i] - 1][conect[j] - 1] += MElemental[i][j];
+            }
+        }
+
+        // Cálculo de q en los puntos de gauss
+
+        // Matrix B
+        BuildB1d(B, DNDE, x1, x2, dim, NNodes_Elemento);
+
+        // Multiplicación por D
+        MatriXEscalar(B, D, dim, NNodes_Elemento);
+
+        // Construcción de Phi elemental
+        for(int i = 0; i<NNodes_Elemento; i++){
+            PhiElemental[i + k] = Phi[i + k];
+        }
+
+        // Calculo de p_gp
+        BFlat = FlattenMatrix(B, dim, NNodes_Elemento);
+        VectorProduct(BFlat, PhiElemental, q_gp, dim, NNodes_Elemento, 1);
+
+        // Construcción de P elemental
+        NEvalTFlat = FlattenMatrix(NEvalT, NNodes_Elemento, dim);
+        VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
+        // Multiplicamos por el jacobiano
+        Divide(PElemental, 1.0/detJacobian1d(x1, x2), PElemental, NNodes_Elemento);
+        
+        // Ensamble de P
+        for(int i = 0; i<NNodes_Elemento; i++){
+            P[i + k] += PElemental[i];
+        }
+        
+    }
+
+    printf("Matrix de masa\n");
+    MatrixShow(NNodes, NNodes, M);
+
+    printf("Vector de promedios\n");
+    VectorShow(NNodes, 1, P);  
+
+    #pragma endregion
+
+    #pragma region Paso 9. Solución sistema M q = P
+
+    // Aplanar la matriz
+    double* MFlat = FlattenMatrix(M, NNodes, NNodes);
+
+    // Método del gradiente conjugado
+    Conjugate_gradient(MFlat, P, q, NNodes, NNodes);
+
+    // Checar si tenemos solución
+    double tolerance = 1e-3;
+    int control = isSolution(MFlat, q, P, NNodes, tolerance);
+
+    if (control == 0 ) {
+        printf("La solución de flujos encontrada es correcta\n");
+    } else {
+        printf("La solución de flujo encontrada no es correcta.\n");
+    }
+
+    printf("La solución del sistema q\n");
+    VectorShow(NNodes, 1, q);
+
+
+    #pragma endregion
+
+    #pragma region Liberar memoria
 
     // Liberar la memoria
     for (int i = 0; i < NElements; i++) {
@@ -369,8 +516,9 @@ int main(int argc, char *argv[]){
     }
     free(elementos); // Libera el arreglo de filas
     free(nodos); 
-    free(NEval);
-    free(DNDE);
+    freeMatrix(NEval, dim);
+    freeMatrix(NEvalT, NNodes_Elemento);
+    freeMatrix(DNDE, dim);
     freeMatrix(K, NNodes);
     freeMatrix(B, dim);
     freeMatrix(BT, NNodes_Elemento);
@@ -382,6 +530,16 @@ int main(int argc, char *argv[]){
     free(bc);
     
     // free(L);
+
+    free(MElemental);
+    freeMatrix(M, NNodes);
+    free(PElemental);
+    free(P);
+    free(PhiElemental);
+    free(q_gp);
+    free(q);
+
+    #pragma endregion
 
     return 0;
 }

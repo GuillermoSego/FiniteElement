@@ -582,34 +582,6 @@ int isSolution(double *A, double *X, double *b, int size, double tolerance) {
     return 0;  // Si todas las componentes son cercanas, X es solución
 }
 
-// double ConditionCheck(double ta[], double td[], int n)
-// {
-
-//     // Definiimos el error
-//     double error = 1*exp(-5);
-    
-//     // Apuntamos
-//     double* taPtr = ta;
-//     double* tdPtr = td;
-
-//     int count = 0, r = 0, i = 0;
-
-//     do {
-
-//         // El posible resultado de r es 0 o 1. Si se cumple (1) si no (0)
-//         r = fabs(*tdPtr ++ - *taPtr ++) <= error;
-//         count += r;
-
-//         i++;
-
-//     } while(i<n && r != 0 );
-
-//     // Regresamos un valor binario, 1 si son iguales 0 si no
-//     return count == n;
-
-
-// }
-
 // Incializar una matriz cuadrada en ceros
 void Matrix_Initialize(double** A, int size){
 
