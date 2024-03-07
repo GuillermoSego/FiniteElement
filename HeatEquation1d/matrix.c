@@ -494,19 +494,12 @@ void freeMatrix(double **matrix, int rows) {
 }
 
 // Rutina para aplanar una matriz
-double *FlattenMatrix(double **matrix, int rows, int cols) {
-    double *flat = (double *)malloc(rows * cols * sizeof(double));
-    if (flat == NULL) {
-        // Manejo de error en caso de que malloc falle
-        return NULL;
-    }
-
+void FlattenMatrix(double **matrix, int rows, int cols, double *flat) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             flat[i * cols + j] = matrix[i][j];
         }
     }
-    return flat;
 }
 
 // Rutina que implementa el metodo del gradiente

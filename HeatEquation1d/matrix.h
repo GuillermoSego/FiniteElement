@@ -67,7 +67,7 @@ double** createMatrix(int n, int m);
 void freeMatrix(double **matrix, int rows);
 
 // Rutina para aplanar una matriz
-double *FlattenMatrix(double **matrix, int rows, int cols);
+void FlattenMatrix(double **matrix, int rows, int cols, double *flat);
 
 // Rutina que implementa el metodo del gradiente
 void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols);

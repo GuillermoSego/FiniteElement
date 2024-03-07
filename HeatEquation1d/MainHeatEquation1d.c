@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
     */
 
     // Declaración de variables del sistema
-    int NElements = 4; // Número de elementos es siempre NNodes - 1 para una malla 1D
+    int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
     int NNodes = NElements + 1; // Número de nodos
     int dim = 1;
     int NNodes_Elemento = 2; // Nodos por elemento
@@ -354,7 +354,8 @@ int main(int argc, char *argv[]){
     */
 
     // Necesitamos aplanar la matriz
-    double* KFlat = FlattenMatrix(K, NNodes, NNodes);
+    double *KFlat = malloc(NNodes * NNodes * sizeof(double));
+    FlattenMatrix(K, NNodes, NNodes, KFlat);
 
     // Método del gradiente conjugado
     Conjugate_gradient(KFlat, F, Phi, NNodes, NNodes);
@@ -379,8 +380,8 @@ int main(int argc, char *argv[]){
     //     printf("La solución encontrada no es correcta.\n");
     // }
 
-    // printf("La solución del sistema\n");
-    // VectorShow(NNodes, 1, Phi);
+    printf("La solución del sistema\n");
+    VectorShow(NNodes, 1, Phi);
 
     #pragma endregion
 
@@ -456,15 +457,27 @@ int main(int argc, char *argv[]){
 
         // Construcción de Phi elemental
         for(int i = 0; i<NNodes_Elemento; i++){
-            PhiElemental[i + k] = Phi[i + k];
+            PhiElemental[i] = Phi[i + k];
         }
 
+        // printf("Iteración %d\n", k);
+        // printf("Phi Elemental\n");
+        // VectorShow(NNodes_Elemento, 1, PhiElemental);
+
         // Calculo de p_gp
-        BFlat = FlattenMatrix(B, dim, NNodes_Elemento);
+        FlattenMatrix(B, dim, NNodes_Elemento, BFlat);
+
+        // printf("B\n");
+        // VectorShow(dim, NNodes_Elemento, BFlat);
+
         VectorProduct(BFlat, PhiElemental, q_gp, dim, NNodes_Elemento, 1);
 
+        // printf("Iteración %d\n", k);
+        // printf("Q_pg\n");
+        // VectorShow(dim, 1, q_gp);
+
         // Construcción de P elemental
-        NEvalTFlat = FlattenMatrix(NEvalT, NNodes_Elemento, dim);
+        FlattenMatrix(NEvalT, NNodes_Elemento, dim, NEvalTFlat);
         VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
         // Multiplicamos por el jacobiano
         Divide(PElemental, 1.0/detJacobian1d(x1, x2), PElemental, NNodes_Elemento);
@@ -476,31 +489,32 @@ int main(int argc, char *argv[]){
         
     }
 
-    printf("Matrix de masa\n");
-    MatrixShow(NNodes, NNodes, M);
+    // printf("Matrix de masa\n");
+    // MatrixShow(NNodes, NNodes, M);
 
-    printf("Vector de promedios\n");
-    VectorShow(NNodes, 1, P);  
+    // printf("Vector de promedios\n");
+    // VectorShow(NNodes, 1, P);  
 
     #pragma endregion
 
     #pragma region Paso 9. Solución sistema M q = P
 
     // Aplanar la matriz
-    double* MFlat = FlattenMatrix(M, NNodes, NNodes);
+    double *MFlat = malloc(NNodes * NNodes * sizeof(double));
+    FlattenMatrix(M, NNodes, NNodes, MFlat);
 
     // Método del gradiente conjugado
     Conjugate_gradient(MFlat, P, q, NNodes, NNodes);
 
     // Checar si tenemos solución
-    double tolerance = 1e-3;
-    int control = isSolution(MFlat, q, P, NNodes, tolerance);
+    // double tolerance = 1e-3;
+    // int control = isSolution(MFlat, q, P, NNodes, tolerance);
 
-    if (control == 0 ) {
-        printf("La solución de flujos encontrada es correcta\n");
-    } else {
-        printf("La solución de flujo encontrada no es correcta.\n");
-    }
+    // if (control == 0 ) {
+    //     printf("La solución de flujos encontrada es correcta\n");
+    // } else {
+    //     printf("La solución de flujo encontrada no es correcta.\n");
+    // }
 
     printf("La solución del sistema q\n");
     VectorShow(NNodes, 1, q);
@@ -528,16 +542,20 @@ int main(int argc, char *argv[]){
     free(F);
     free(Phi);
     free(bc);
+    free(KFlat);
     
     // free(L);
 
-    free(MElemental);
+    freeMatrix(MElemental, NNodes_Elemento);
     freeMatrix(M, NNodes);
     free(PElemental);
+    free(BFlat);
+    free(NEvalTFlat);
     free(P);
     free(PhiElemental);
     free(q_gp);
     free(q);
+    free(MFlat);
 
     #pragma endregion
 
