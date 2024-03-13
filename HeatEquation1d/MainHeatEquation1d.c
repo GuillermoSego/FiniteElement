@@ -13,14 +13,13 @@ no puede trabajar con mallas
 int main(int argc, char *argv[]){
 
     // Validación de número de argumentos pasados por la línea de comandos
-    if(argc != 3) {
+    if(argc != 2) {
         printf("Uso: %s <nombre_archivo>\n", argv[0]);
         return 1;
     }
 
     // Asignación del nombre del archivo a una variable constante
-    const char* filename_Nodes = argv[1];
-    const char* filename_Connections = argv[2];
+    const char* filename_Mesh = argv[1];
     
     #pragma region Paso 1. Formulación del problema.
 
@@ -34,10 +33,14 @@ int main(int argc, char *argv[]){
     */
 
     // Declaración de variables del sistema
-    int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
-    int NNodes = NElements + 1; // Número de nodos
-    int dim = 1;
-    int NNodes_Elemento = 2; // Nodos por elemento
+    // int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
+    // int NNodes = NElements + 1; // Número de nodos
+    // int dim = 1;
+    // int NNodes_Elemento = 2; // Nodos por elemento
+
+    int dim, NNodes, NElements, NNodes_Elemento;
+
+    ProblemDefinition(filename_Mesh, &dim, &NNodes, &NElements, &NNodes_Elemento);
 
     double* nodos = malloc(NNodes * sizeof(double)); // Arreglo para almacenar las coordenadas de los nodos
     int** elementos = malloc( NElements * sizeof(int *)); // Matriz para almacenar la conexión entre nodos para cada elemento
@@ -46,6 +49,7 @@ int main(int argc, char *argv[]){
         // Asigna memoria para cada columna de esta fila
         elementos[i] = malloc(NNodes_Elemento * sizeof(int));
     }
+
 
     #pragma endregion
 
@@ -56,32 +60,35 @@ int main(int argc, char *argv[]){
     Se escanean los archivos generados por GID.
     */
 
+    // Leemos la malla
+    ReadMesh(filename_Mesh, nodos, elementos, dim, NNodes, NElements, NNodes_Elemento);
+
     // Leemos la matriz de nodos
-    if (ReadVector(filename_Nodes, nodos, NNodes) == 1) {
-        free(nodos); // Liberamos memoria
-        return 0;
-    }
-
-    // Leemos la matriz de conexiones
-    if (ReadMatrix(filename_Connections, elementos, NElements, NNodes_Elemento) == 1) {
-        free(elementos); // Liberamos memoria
-        return 0;
-    }
-
-
-    // // Mostrar las coordenadas de los nodos
-    // VectorShow(NNodes, 1, nodos);
-
-    // // Mostrar las conexiones de los elementos
-    // printf("Elementos y sus nodos conectados:\n");
-
-    // for (int i = 0; i < NElements; i++) {
-    //     printf("Elemento %d. Nodos: ", i);
-    //     for (int j = 0; j < NNodes_Elemento; j++){     
-    //         printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
-    //     }
-    //     printf("\n");
+    // if (ReadVector(filename_Nodes, nodos, NNodes) == 1) {
+    //     free(nodos); // Liberamos memoria
+    //     return 0;
     // }
+
+    // // Leemos la matriz de conexiones
+    // if (ReadMatrix(filename_Connections, elementos, NElements, NNodes_Elemento) == 1) {
+    //     free(elementos); // Liberamos memoria
+    //     return 0;
+    // }
+
+
+    // Mostrar las coordenadas de los nodos
+    VectorShow(NNodes, 1, nodos);
+
+    // Mostrar las conexiones de los elementos
+    printf("Elementos y sus nodos conectados:\n");
+
+    for (int i = 0; i < NElements; i++) {
+        printf("Elemento %d. Nodos: ", i);
+        for (int j = 0; j < NNodes_Elemento; j++){     
+            printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
+        }
+        printf("\n");
+    }
 
     // La estructura de la matriz de conectividades es elemento[Número de elemento][Número de nodo]
     

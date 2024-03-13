@@ -35,3 +35,9 @@ typedef struct {
 
 // Función para leer las condiciones del archivo
 BoundaryConditions* readConditions(const char *filename);
+
+// Rutina que lee la malla y da los parámetros del problema
+void ProblemDefinition(const char *filename, int* dim, int* NNodes, int* NElements, int* NNodes_Elemento);
+
+// Rutina que lee la malla y da los parámetros del problema
+void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int NNodes, int NElements, int NNodes_Elemento);
