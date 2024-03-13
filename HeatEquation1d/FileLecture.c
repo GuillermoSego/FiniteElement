@@ -82,7 +82,6 @@ void ProblemDefinition(const char *filename, int* dim, int* NNodes, int* NElemen
     fclose(file);
 }
 
-
 // Rutina que lee la malla y da los parámetros del problema
 void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int NNodes, int NElements, int NNodes_Elemento) {
     FILE *file = fopen(filename, "r");
@@ -93,9 +92,12 @@ void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int
         return;
     }
 
-    int readingCoordinates = 0, readingElements = 0, nodeCount = 0, elementCount = 0;
+    unsigned int readingCoordinates = 0, readingElements = 0, nodeCount = 0, elementCount = 0;
 
     while (fgets(line, sizeof(line), file) != NULL) {
+        
+        // printf("%s", line);
+
         if (strstr(line, "End Coordinates")) {
             readingCoordinates = 0;
             continue;
@@ -106,27 +108,53 @@ void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int
 
         if (strstr(line, "Coordinates")) {
             readingCoordinates = 1;
-            continue;
         } else if (strstr(line, "Elements")) {
             readingElements = 1;
             readingCoordinates = 0;
-            continue;
         }
 
-        if (readingCoordinates && nodeCount < NNodes) {
-            double x, y = 0.0, z = 0.0; // Asumiendo un máximo de 3 dimensiones
-            sscanf(line, "%*d %lf %lf %lf", &x, &y, &z);
-            nodos[nodeCount * dim] = x;
-            if (dim > 1) nodos[nodeCount * dim + 1] = y;
-            if (dim > 2) nodos[nodeCount * dim + 2] = z;
-            nodeCount++;
-        } else if (readingElements && elementCount < NElements) {
-            int id, node1, node2, node3 = 0; // Asumiendo un máximo de 3 nodos por elemento
-            sscanf(line, "%*d %d %d %d", &id, &node1, &node2);
-            elementos[elementCount][0] = node1;
-            elementos[elementCount][1] = node2;
-            if (NNodes_Elemento > 2) elementos[elementCount][2] = node3; // Si es necesario
-            elementCount++;
+        if (readingCoordinates == 1 && nodeCount == 0) {
+            // printf("%s", line);
+            // Lectura de vector de coordenadas
+                for (int i = 0; i < NNodes; i++) {
+                    // Salta el primer valor
+                    fscanf(file, "%*f");
+
+                    // Lee el valor del nodo y lo guarda
+                    if (fscanf(file, "%lf", &nodos[i]) != 1) {
+                        fclose(file);
+                        return;  // Error de lectura
+                    }
+                    // printf("%lf\n", nodos[i]);
+                }
+
+            nodeCount ++;
+
+        } else if (readingElements == 1 && elementCount == 0) {
+            // printf("%s", line);
+            // Lectura de matriz de conexiones
+            for (int i = 0; i < NElements; i++)
+            {
+                // Salta el primer valor
+                fscanf(file, "%*d");
+
+                for (int j = 0; j < NNodes_Elemento; j++)
+                {
+                    if (fscanf(file, "%d", &elementos[i][j]) != 1) { // Asignar valores directamente a la matriz
+                        fclose(file);
+                        return; // Error de lectura
+                    }
+
+                    // printf("%d\n", elementos[i][j]);
+
+                }
+
+                // Salta una línea completa en el archivo
+                // fscanf(file, "%*[^\n]\n");
+
+            }   
+            elementCount ++;
+
         }
     }
 
@@ -159,6 +187,7 @@ int main(int argc, char *argv[]) {
         elementos[i] = malloc(NNodes_Elemento * sizeof(int));
     }
 
+    ReadMesh(filename_Mesh, nodos, elementos, dim, NNodes, NElements, NNodes_Elemento);
 
     // Mostrar las coordenadas de los nodos
     VectorShow(NNodes, 1, nodos);
@@ -167,7 +196,7 @@ int main(int argc, char *argv[]) {
     printf("Elementos y sus nodos conectados:\n");
 
     for (int i = 0; i < NElements; i++) {
-        printf("Elemento %d. Nodos: ", i);
+        printf("Elemento %d. Nodos: ", i+1);
         for (int j = 0; j < NNodes_Elemento; j++){     
             printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
         }
