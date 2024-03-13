@@ -3,6 +3,25 @@
 #include <stdlib.h>
 #include "matrix.h"
 
+// Esta rutina muestra un vector de mxn
+void VectorShow(int m, int n, double *v){
+
+    int i, j, k=0;
+    
+    for(i=0 ; i<m ; i++){
+        
+        for (j=0 ; j<n ; j ++){
+            
+            printf("%lf \t", v[k]);
+            k ++;
+        }
+        
+        printf("\n");
+    }
+    
+    
+}
+
 // Rutina que lee la malla y da los parámetros del problema
 void ProblemDefinition(const char *filename, int* dim, int* NNodes, int* NElements, int* NNodes_Elemento){
     FILE *file;
@@ -141,7 +160,19 @@ int main(int argc, char *argv[]) {
     }
 
 
+    // Mostrar las coordenadas de los nodos
+    VectorShow(NNodes, 1, nodos);
 
+    // Mostrar las conexiones de los elementos
+    printf("Elementos y sus nodos conectados:\n");
+
+    for (int i = 0; i < NElements; i++) {
+        printf("Elemento %d. Nodos: ", i);
+        for (int j = 0; j < NNodes_Elemento; j++){     
+            printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
+        }
+        printf("\n");
+    }
 
 
     // Liberar la memoria
