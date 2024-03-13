@@ -1,0 +1,11 @@
+PROBLEM DATA
+BOOK: Opcion 1
+QUESTION: Tipo_de_problema#CB#(1D,2D,3D,4D)
+VALUE: 1D
+QUESTION: FuncionDeForma#CB#(2_nodos,3_nodos,4_nodos)
+VALUE: 3_nodos
+BOOK: Opcion 2
+BOOK: Opcion 3
+END PROBLEM DATA
+INTERVAL DATA
+END INTERVAL DATA

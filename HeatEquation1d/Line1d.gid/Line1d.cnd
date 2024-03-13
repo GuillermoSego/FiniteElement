@@ -1,0 +1,14 @@
+BOOK:Dirichlet
+NUMBER: 1 CONDITION: DirichletEnPunto
+CONDTYPE: over points
+CONDMESHTYPE: over nodes
+QUESTION: Valor_Fijo
+VALUE: 0.0
+END CONDITION
+BOOK:Neumann
+NUMBER: 2 CONDITION: FuentePuntual
+CONDTYPE: over points
+CONDMESHTYPE: over nodes
+QUESTION: Valor_Fuente
+VALUE: 0.0
+END CONDITION

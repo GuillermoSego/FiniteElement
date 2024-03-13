@@ -1,0 +1,9 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/guillermo_sego/Desktop/Segundo Semestre/Elemento Finito/HeatEquation1d/FileLecture'
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _readConditions, symObjAddr: 0x0, symBinAddr: 0x100003730, symSize: 0x368 }
+  - { offsetInCU: 0x42, offset: 0x42, size: 0x8, addend: 0x0, symName: _readConditions, symObjAddr: 0x0, symBinAddr: 0x100003730, symSize: 0x368 }
+  - { offsetInCU: 0x11B, offset: 0x11B, size: 0x8, addend: 0x0, symName: _ProblemDefinition, symObjAddr: 0x368, symBinAddr: 0x100003A98, symSize: 0x10 }
+  - { offsetInCU: 0x13F, offset: 0x13F, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x378, symBinAddr: 0x100003AA8, symSize: 0x2D4 }
+...
