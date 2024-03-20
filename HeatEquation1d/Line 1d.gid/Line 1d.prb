@@ -1,0 +1,20 @@
+PROBLEM DATA
+BOOK: Dimensiones
+QUESTION: Tipo_de_elemento#CB#(1D,2D,3D)
+VALUE: 1D
+BOOK: Configuracion_1D
+QUESTION: Numero_de_nodos_1D#CB#(2_nodos,3_nodos)
+VALUE: 2_nodos
+BOOK: Configuracion_2D
+QUESTION: Tipo_de_elemento_2D#CB#(Triangulo,Cuadrilatero)
+VALUE: Triangulo
+QUESTION: Numero_de_nodos_2D#CB#(3_nodos,4_nodos,6_nodos,8_nodos)
+VALUE: 3_nodos
+BOOK: Configuracion_3D
+QUESTION: Tipo_de_elemento_3D#CB#(Tetraedro,Hexaedro,Prisma,Piramide)
+VALUE: Tetraedro
+QUESTION: Numero_de_nodos_3D#CB#(4_nodos,8_nodos,10_nodos,20_nodos)
+VALUE: 4_nodos
+END PROBLEM DATA
+INTERVAL DATA
+END INTERVAL DATA

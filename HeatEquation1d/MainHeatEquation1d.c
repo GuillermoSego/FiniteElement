@@ -2,7 +2,11 @@
 /*
 Programa para resolver el método de elementos finitos en una dimensión. Trabajamos con una malla
 equidistante (esto puede cambiar). Con un número de nodos fijos por cada elemento. Este programa
-no puede trabajar con mallas 
+no puede trabajar con mallas conformadas por diferentes elementos.
+
+Guillermo Segura Gómez
+Centro de Investigación en Matemáticas
+Marzo 2024
 */
 
 # include <stdio.h>
