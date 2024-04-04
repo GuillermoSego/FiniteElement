@@ -1,0 +1,56 @@
+HEAT EQUATION SOLVER - GUILLERMO SEGURA GOMEZ
+CENTRO DE INVESTIGACION EN MATEMATICAS
+DIMENSIONES_DEL_PROBLEMA: 2        
+NUMERO_DE_PUNTOS_NODALES: 10        
+NUMERO_TOTAL_DE_ELEMENTOS: 9 
+NUMERO_DE_MATERIALES: 0
+TIPO_DE_ELEMENTOS_EN_LA_MALLA: LINEALES
+NUMERO_DE_NODOS_ELEMENTO: 2
+Int:1
+Dirichlet:0
+Newmann:0
+
+ELEMENTOS_Y_CONECTIVIDADES--------------------------------------------------------------------------
+NUMERO_DE_ELEMENTOS_LI02: 9
+NUMERO_DE_ELEMENTOS_TR03: 0
+NUMERO_DE_ELEMENTOS_QU04: 0
+NUMERO_DE_ELEMENTOS_TE04: 0
+NUMERO_DE_ELEMENTOS_HE08: 0
+NUMERO_DE_ELEMENTOS_PR06: 0
+NUMERO_DE_ELEMENTOS_PY05: 0
+
+Elements
+LI02/_#ELEMENTO_/MATERIAL/CONECTIVIDADES
+            1             0            10            9
+            2             0             9            8
+            3             0             8            7
+            4             0             7            6
+            5             0             6            5
+            6             0             5            4
+            7             0             4            3
+            8             0             3            2
+            9             0             2            1
+End Elements
+
+Coordinates
+            1           1.0000000000000000e+01   0.0000000000000000e+00
+            2           9.0000000000000000e+00   0.0000000000000000e+00
+            3           8.0000000000000000e+00   0.0000000000000000e+00
+            4           7.0000000000000009e+00   0.0000000000000000e+00
+            5           6.0000000000000000e+00   0.0000000000000000e+00
+            6           5.0000000000000000e+00   0.0000000000000000e+00
+            7           4.0000000000000000e+00   0.0000000000000000e+00
+            8           3.0000000000000000e+00   0.0000000000000000e+00
+            9           2.0000000000000000e+00   0.0000000000000000e+00
+           10           1.0000000000000000e+00   0.0000000000000000e+00
+End Coordinates
+
+Dirichlet
+End Dirichlet
+
+Newmann
+End Newmann
+
+Materials:
+#__/Nombre____/ESPESOR/DENSIDAD/CALOR_DE_MASA_/_CONDUCTIVIDAD_TERMICA
+End Materials

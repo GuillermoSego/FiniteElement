@@ -26,18 +26,28 @@ void BuildB1d(double** B, double **DNDE, double x1, double x2, int dim, int NEle
 void BuildF1d(double* F, double** N, double Q, double x1, double x2, int NElements );
 
 // Estructura para almacenar las condiciones de Dirichlet y Neumann
+// typedef struct {
+//     float dirichlet[2]; // Valores de las condiciones de Dirichlet
+//     bool dirichletValid[2]; // Indicadores para saber si las condiciones de Dirichlet son válidas
+//     float neumann[2]; // Valores de las condiciones de Neumann
+//     bool neumannValid[2]; // Indicadores para saber si las condiciones de Neumann son válidas
+// } BoundaryConditions;
+
+// // Función para leer las condiciones del archivo
+// BoundaryConditions* readConditions(const char *filename);
+
 typedef struct {
-    float dirichlet[2]; // Valores de las condiciones de Dirichlet
-    bool dirichletValid[2]; // Indicadores para saber si las condiciones de Dirichlet son válidas
-    float neumann[2]; // Valores de las condiciones de Neumann
-    bool neumannValid[2]; // Indicadores para saber si las condiciones de Neumann son válidas
+    int *dirichletNodes; // Array dinámico para nodos con condiciones de Dirichlet
+    double *dirichletValues; // Array dinámico para valores de las condiciones de Dirichlet
+    int *neumannNodes; // Array dinámico para nodos con condiciones de Neumann
+    double *neumannValues; // Array dinámico para valores de las condiciones de Neumann
 } BoundaryConditions;
-
-// Función para leer las condiciones del archivo
-BoundaryConditions* readConditions(const char *filename);
+BoundaryConditions* readConditions(const char *filename, int NCDirichlet, int NCNeumann);
 
 // Rutina que lee la malla y da los parámetros del problema
-void ProblemDefinition(const char *filename, int* dim, int* NNodes, int* NElements, int* NNodes_Elemento);
+void ProblemDef(const char *filename, int* dim, int* NNodes, int* NElements, int* NMaterials, 
+int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann);
 
 // Rutina que lee la malla y da los parámetros del problema
-void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int NNodes, int NElements, int NNodes_Elemento);
+void Mesh(const char *filename, double **nodos, int** elementos, unsigned int* Materials, 
+int dim, int NNodes, int NElements, int NNodes_Elemento);

@@ -82,58 +82,47 @@ void BuildF1d(double* F, double** N, double Q, double x1, double x2, int NElemen
     }
 }
 
-
 // Función para leer las condiciones del archivo
-BoundaryConditions* readConditions(const char *filename) {
+BoundaryConditions* readConditions(const char *filename, int NCDirichlet, int NCNeumann) {
     FILE *file = fopen(filename, "r");
     BoundaryConditions *bc = malloc(sizeof(BoundaryConditions));
-    char line[256];
-    int numConditions;
 
     if (file == NULL || bc == NULL) {
         printf("Error al abrir el archivo o al asignar memoria.\n");
         return NULL;
     }
 
-    // Leer el número de condiciones
-    fgets(line, sizeof(line), file); // Linea de no de condiciones
-    fgets(line, sizeof(line), file); // Linea del número
-    sscanf(line, "%d", &numConditions);
-    // printf("No condiciones: %d\n", numConditions);
+    // Inicializar los arrays dentro de la estructura BoundaryConditions
+    bc->dirichletNodes = malloc(NCDirichlet * sizeof(int));
+    bc->dirichletValues = malloc(NCDirichlet * sizeof(double));
+    bc->neumannNodes = malloc(NCNeumann * sizeof(int));
+    bc->neumannValues = malloc(NCNeumann * sizeof(double));
 
-    // Leer y procesar las condiciones de Dirichlet
-    fgets(line, sizeof(line), file); // Leer la línea "Condiciones Dirichlet"
-    // printf("Leído: %s\n", line);
-    fgets(line, sizeof(line), file); // Leer la línea con las condiciones
-    // printf("Leído: %s\n", line);
-    line[strcspn(line, "\r\n")] = 0;  // Elimina el final de línea
+    char line[256];
+    unsigned int readingDirichlet = 0, readingNeumann = 0;
 
-    // printf("Lectura de condiciones\n");
-
-    for (int i = 0; i < 2; i++) {
-        char *token = (i == 0) ? strtok(line, ",") : strtok(NULL, ",");
-        if (token == NULL) {
-            break; // No hay más tokens
-        }
-        // printf("Leído: %s\n", token); // Después de leer una línea
-        if (strcmp(token, "None") == 0) {
-            bc->dirichletValid[i] = false;
-        } else {
-            bc->dirichlet[i] = atof(token);
-            bc->dirichletValid[i] = true;
-        }
-    }
-
-    // Leer y procesar las condiciones de Neumann
-    fgets(line, sizeof(line), file); // Leer la línea "Condiciones Neumann"
-    fgets(line, sizeof(line), file); // Leer la línea con las condiciones
-    for (int i = 0; i < 2; i++) {
-        char *token = (i == 0) ? strtok(line, ", ") : strtok(NULL, ", ");
-        if (strcmp(token, "None") == 0) {
-            bc->neumannValid[i] = false;
-        } else {
-            bc->neumann[i] = atof(token);
-            bc->neumannValid[i] = true;
+    // Itera sobre las lineas del archivo
+    while (fgets(line, sizeof(line), file) != NULL) {
+        if (strcmp(line, "Dirichlet\n") == 0) {
+            readingDirichlet = 1;
+            continue;  // Salta a la siguiente iteración del bucle para comenzar a leer condiciones
+        } else if (strcmp(line, "Newmann\n") == 0) {
+            readingNeumann = 1;
+            continue;  // Salta a la siguiente iteración del bucle para comenzar a leer condiciones
+        } else if (strstr(line, "End Dirichlet")) {
+            readingDirichlet = 0;
+        } else if (strstr(line, "End Newmann")) {
+            readingNeumann = 0;
+        } else if (readingDirichlet) {
+            if (sscanf(line, "%d %lf", &bc->dirichletNodes[readingDirichlet - 1], &bc->dirichletValues[readingDirichlet - 1]) == 2) {
+                readingDirichlet++;
+                if (readingDirichlet > NCDirichlet) break;  // Rompe el bucle si se leyeron todas las condiciones esperadas
+            }
+        } else if (readingNeumann) {
+            if (sscanf(line, "%d %lf", &bc->neumannNodes[readingNeumann - 1], &bc->neumannValues[readingNeumann - 1]) == 2) {
+                readingNeumann++;
+                if (readingNeumann > NCNeumann) break;  // Rompe el bucle si se leyeron todas las condiciones esperadas
+            }
         }
     }
 
@@ -141,68 +130,101 @@ BoundaryConditions* readConditions(const char *filename) {
     return bc;
 }
 
-// Rutina que lee la malla y da los parámetros del problema
-void ProblemDefinition(const char *filename, int* dim, int* NNodes, int* NElements, int* NNodes_Elemento){
-    FILE *file;
-    file = fopen(filename, "r");
+void ProblemDef(const char *filename, int* dim, int* NNodes, int* NElements, int* NMaterials, 
+int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann) {
 
+    FILE *file = fopen(filename, "r");
     char line[256];
 
     if (file == NULL) {
         printf("No se pudo abrir el archivo\n");
-        return; 
-    }
-
-    fgets(line, sizeof(line), file); // Línea de condiciones
-    // printf("Leído: %s", line);
-
-    // Analiza la línea para extraer la dimensión y el número de nodos por elemento
-    if (sscanf(line, "MESH dimension %d ElemType Linear Nnode %d", dim, NNodes_Elemento) == 2) {
-        // Si sscanf devuelve 2, significa que ambos valores fueron leídos exitosamente
-        // printf("La dimensión de la malla es: %d\n", *dim);
-        // printf("El número de nodos por elemento: %d\n", *NNodes_Elemento);
-    } else {
-        printf("No se pudo leer correctamente la información de la malla\n");
         return;
     }
 
-    *NNodes = 0; // Inicialización de contadores
-    *NElements = 0;
-    int readingCoordinates = 0, readingElements = 0;
+    // Variable auxiliar
+    int aux = 0;
 
     while (fgets(line, sizeof(line), file) != NULL) {
-        if (strstr(line, "End Coordinates")) {
-            readingCoordinates = 0;
-            continue;
-        } else if (strstr(line, "End Elements")) {
-            readingElements = 0;
-            continue;
+        // Analizar la dimensión
+        if (strstr(line, "DIMENSIONES_DEL_PROBLEMA:")) {    
+            if (sscanf(line, "DIMENSIONES_DEL_PROBLEMA: %d", dim) != 1) {
+                printf("Error al leer la dimensión del problema\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número de puntos nodales
+        else if (strstr(line, "NUMERO_DE_PUNTOS_NODALES:")) {
+            if (sscanf(line, "NUMERO_DE_PUNTOS_NODALES: %d", NNodes) != 1) {
+                printf("Error al leer el número de puntos nodales\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número total de elementos
+        else if (strstr(line, "NUMERO_TOTAL_DE_ELEMENTOS:")) {
+            if (sscanf(line, "NUMERO_TOTAL_DE_ELEMENTOS: %d", NElements) != 1) {
+                printf("Error al leer el número total de elementos\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número de materiales
+        else if (strstr(line, "NUMERO_DE_MATERIALES:")) {
+            if (sscanf(line, "NUMERO_DE_MATERIALES: %d", NMaterials) != 1) {
+                printf("Error al leer el número de materiales\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número de nodos por elemento
+        else if (strstr(line, "NUMERO_DE_NODOS_ELEMENTO:")) {
+            if (sscanf(line, "NUMERO_DE_NODOS_ELEMENTO: %d", NNodes_Elemento) != 1) {
+                printf("Error al leer el número de nodos por elemento\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número de condiciones de Dirichlet
+        else if (strstr(line, "NCDirichlet:")) {
+            if (sscanf(line, "NCDirichlet: %d", NCDirichlet) != 1) {
+                printf("Error al leer el número de condiciones Dirichlet\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el número de condiciones de Neumann
+        else if (strstr(line, "NCNewmann:")) {
+            if (sscanf(line, "NCNewmann: %d", NCNewmann) != 1) {
+                printf("Error al leer el número de condiciones Neumann\n");
+                fclose(file);
+                return;
+            }
         }
 
-        if (strstr(line, "Coordinates")) {
-            readingCoordinates = 1; // Iniciar la lectura de coordenadas
-            continue; // Saltar al siguiente ciclo del bucle
-        } else if (strstr(line, "Elements")) {
-            readingElements = 1; // Iniciar la lectura de elementos
-            readingCoordinates = 0; // Asegurar que la lectura de coordenadas esté desactivada
-            continue;
+        // Revisar tipo de elemento para revaluar dimensiones 
+        else if (strstr(line, "NUMERO_DE_ELEMENTOS_LI02:")) {
+            if (sscanf(line, "NUMERO_DE_ELEMENTOS_LI02: %d", &aux) != 1) {
+                printf("Error al leer tipo de conectividad\n");
+                fclose(file);
+                return;
+            }
+
+            // Tipo de elemento linear
+            if (aux != 0){
+                *dim = 1;
+            }
+
         }
 
-        if (readingCoordinates) {
-            (*NNodes)++; // Cada línea válida dentro de Coordinates incrementa el contador de nodos
-        } else if (readingElements) {
-            (*NElements)++; // Cada línea válida dentro de Elements incrementa el contador de elementos
-        }
     }
-
-    // printf("Número total de nodos: %d\n", *NNodes);
-    // printf("Número total de elementos: %d\n", *NElements);
 
     fclose(file);
 }
 
 // Rutina que lee la malla y da los parámetros del problema
-void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int NNodes, int NElements, int NNodes_Elemento) {
+void Mesh(const char *filename, double **nodos, int** elementos, unsigned int* Materials, 
+int dim, int NNodes, int NElements, int NNodes_Elemento) {
     FILE *file = fopen(filename, "r");
     char line[256];
 
@@ -212,6 +234,7 @@ void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int
     }
 
     unsigned int readingCoordinates = 0, readingElements = 0, nodeCount = 0, elementCount = 0;
+    unsigned int elementPos, CoordPos;
 
     while (fgets(line, sizeof(line), file) != NULL) {
         
@@ -229,37 +252,89 @@ void ReadMesh(const char *filename, double *nodos, int** elementos, int dim, int
             readingCoordinates = 1;
         } else if (strstr(line, "Elements")) {
             readingElements = 1;
-            readingCoordinates = 0;
         }
 
         if (readingCoordinates == 1 && nodeCount == 0) {
             // printf("%s", line);
             // Lectura de vector de coordenadas
-                for (int i = 0; i < NNodes; i++) {
-                    // Salta el primer valor
-                    fscanf(file, "%*f");
-
-                    // Lee el valor del nodo y lo guarda
-                    if (fscanf(file, "%lf", &nodos[i]) != 1) {
-                        fclose(file);
-                        return;  // Error de lectura
-                    }
-                    // printf("%lf\n", nodos[i]);
+            for (int i = 0; i < NNodes; i++) {
+                
+                // Posición de la coordenada
+                if (fscanf(file, "%d", &CoordPos) != 1) { 
+                    fclose(file);
+                    return; // Error de lectura
                 }
+
+                // printf("Posición coordenada: %d\n", CoordPos);
+
+                // Lee el valor del nodo y lo guarda
+                // if (fscanf(file, "%lf", &nodos[i]) != 1) {
+                //     fclose(file);
+                //     return;  // Error de lectura
+                // }
+
+                // Caso 1d
+                if (dim == 1){ 
+                    for (int j = 0; j < dim; j++){
+                        if (fscanf(file, "%lf", &nodos[i][j]) != 1) { // Asignar valores directamente a la matriz
+                            fclose(file);
+                            return; // Error de lectura
+                        }
+
+                        // Salta segundo valor nulo
+                        fscanf(file, "%*f");
+
+                        // printf("%lf\n", nodos[i][j]);
+
+                    }
+
+                }
+
+                // Caso 2d en adelante
+                if (dim != 1){ 
+                    for (int j = 0; j < dim; j++){
+                        if (fscanf(file, "%lf", &nodos[i][j]) != 1) { 
+                            fclose(file);
+                            return; // Error de lectura
+                        }
+
+                        // printf("%lf\n", nodos[i][j]);
+
+                    }
+
+                }
+                
+            }
 
             nodeCount ++;
 
         } else if (readingElements == 1 && elementCount == 0) {
             // printf("%s", line);
+            fgets(line, sizeof(line), file); // Información sobre elemento
+            // printf("Leído: %s", line);
             // Lectura de matriz de conexiones
             for (int i = 0; i < NElements; i++)
             {
-                // Salta el primer valor
-                fscanf(file, "%*d");
+                // Posición del elemento
+                if (fscanf(file, "%d", &elementPos) != 1) { 
+                    fclose(file);
+                    return; // Error de lectura
+                }
+
+                // printf("Posición elemento: %d\n", elementPos);
+
+                // Leer material
+                if (fscanf(file, "%d", &Materials[elementPos - 1]) != 1) { 
+                    fclose(file);
+                    return; // Error de lectura
+                }
+
+                // printf("Material : %d\n", Materials[elementPos-1]);
 
                 for (int j = 0; j < NNodes_Elemento; j++)
                 {
-                    if (fscanf(file, "%d", &elementos[i][j]) != 1) { // Asignar valores directamente a la matriz
+                    // Asignar valores directamente a la matriz
+                    if (fscanf(file, "%d", &elementos[elementPos - 1][j]) != 1) {
                         fclose(file);
                         return; // Error de lectura
                     }

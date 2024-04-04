@@ -23,7 +23,7 @@ int main(int argc, char *argv[]){
     }
 
     // Asignación del nombre del archivo a una variable constante
-    const char* filename_Mesh = argv[1];
+    const char* filename_dat = argv[1];
     
     #pragma region Paso 1. Formulación del problema.
 
@@ -42,12 +42,14 @@ int main(int argc, char *argv[]){
     // int dim = 1;
     // int NNodes_Elemento = 2; // Nodos por elemento
 
-    int dim, NNodes, NElements, NNodes_Elemento;
+    int dim, NNodes, NElements, NNodes_Elemento, NMaterials, NCDirichlet, NCNeumann;
 
-    ProblemDefinition(filename_Mesh, &dim, &NNodes, &NElements, &NNodes_Elemento);
+    ProblemDef(filename_dat, &dim, &NNodes, &NElements, &NMaterials, &NNodes_Elemento, 
+    &NCDirichlet, &NCNeumann);
 
-    double* nodos = malloc(NNodes * sizeof(double)); // Arreglo para almacenar las coordenadas de los nodos
+    double** nodos = createMatrix(NNodes, dim); // Matriz para almacenar las coordendas de los nodos
     int** elementos = malloc( NElements * sizeof(int *)); // Matriz para almacenar la conexión entre nodos para cada elemento
+    unsigned int* Materials = malloc( NElements * sizeof(int)); // Matriz para almacenar los materiales
 
     for (int i = 0; i < NElements; i++) {
         // Asigna memoria para cada columna de esta fila
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]){
     */
 
     // Leemos la malla
-    ReadMesh(filename_Mesh, nodos, elementos, dim, NNodes, NElements, NNodes_Elemento);
+    Mesh(filename_dat, nodos, elementos, Materials, dim, NNodes, NElements, NNodes_Elemento);
 
     // Leemos la matriz de nodos
     // if (ReadVector(filename_Nodes, nodos, NNodes) == 1) {
@@ -80,19 +82,24 @@ int main(int argc, char *argv[]){
     // }
 
 
-    // Mostrar las coordenadas de los nodos
-    VectorShow(NNodes, 1, nodos);
-
     // Mostrar las conexiones de los elementos
-    printf("Elementos y sus nodos conectados:\n");
+    // printf("Elementos y sus nodos conectados:\n");
 
-    for (int i = 0; i < NElements; i++) {
-        printf("Elemento %d. Nodos: ", i);
-        for (int j = 0; j < NNodes_Elemento; j++){     
-            printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
-        }
-        printf("\n");
-    }
+    // for (int i = 0; i < NElements; i++) {
+    //     printf("Elemento %d. Nodos: ", i+1);
+    //     for (int j = 0; j < NNodes_Elemento; j++){     
+    //         printf("%d   ", elementos[i][j]);     // Nodo inicial del elemento i
+    //     }
+    //     printf("\n");
+    // }
+
+    // printf("Coordendas\n");
+    // MatrixShow(NNodes, dim, nodos);
+
+    // printf("Materiales por nodo:\n");
+    // for (int i = 0; i<NElements; i++){
+    //     printf("Elemento %d. Material: %d\n", i+1, Materials[i]);
+    // }
 
     // La estructura de la matriz de conectividades es elemento[Número de elemento][Número de nodo]
     
@@ -221,8 +228,8 @@ int main(int argc, char *argv[]){
             conect[w] = elementos[k][w];
         }
 
-        x1 = nodos[conect[0] - 1];
-        x2 = nodos[conect[1] - 1];
+        x1 = nodos[conect[0] - 1][0];
+        x2 = nodos[conect[1] - 1][0];
         // printf("%lf, %lf\n", x1, x2);
 
         // Calculo de la matriz B
@@ -286,62 +293,48 @@ int main(int argc, char *argv[]){
     */
 
     // Leemos las condiciones de Dirichlet y Neumann
-    BoundaryConditions *bc = readConditions("CondFrontera1d.txt");
+    BoundaryConditions *bc = readConditions(filename_dat, NCDirichlet, NCNeumann);
 
     // Mostrar las condiciones
+    // Comprobar si se devolvió correctamente la estructura BoundaryConditions
     // if (bc != NULL) {
-    //     for (int i = 0; i < 2; i++) {
-    //         if (bc->dirichletValid[i]) {
-    //             printf("Condición Dirichlet %d: %f\n", i, bc->dirichlet[i]);
-    //         } else {
-    //             printf("Condición Dirichlet %d: None\n", i);
-    //         }
+    //     // La función se ejecutó correctamente, puedes usar los datos de 'bc' aquí
+
+    //     // Ejemplo de acceso a los datos:
+    //     printf("Condiciones Dirichlet:\n");
+    //     for (int i = 0; i < NCDirichlet; i++) {
+    //         printf("Nodo: %d, Valor: %f\n", bc->dirichletNodes[i], bc->dirichletValues[i]);
     //     }
 
-    //     for (int i = 0; i < 2; i++) {
-    //         if (bc->neumannValid[i]) {
-    //             printf("Condición Neumann %d: %f\n", i, bc->neumann[i]);
-    //         } else {
-    //             printf("Condición Neumann %d: None\n", i);
-    //         }
-    //     }
-
+    //     // No olvides liberar la memoria asignada dinámicamente
+    //     free(bc->dirichletNodes);
+    //     free(bc->dirichletValues);
+    //     free(bc->neumannNodes); // Incluso si NCNeumann es 0, es buena práctica intentar liberar, ya que free(NULL) es seguro
+    //     free(bc->neumannValues);
+    //     free(bc);
+    // } else {
+    //     printf("Error al leer las condiciones del archivo.\n");
     // }
 
     // Aplicación de las condiciones de contorno
     if (bc != NULL) {
         // Aplicación de condiciones de Dirichlet
-        for (int i = 0; i < 2; i++) {
-            if (bc->dirichletValid[i]) {
-                // Aplicar en el inicio (i=0) o al final (i=1) del dominio
-                int index = (i == 0) ? 0 : NNodes-1;
-                for (int j = 0; j < NNodes; j++) {
-                    K[index][j] = 0.0;  // Poner la fila correspondiente de la matriz K en 0
-                    K[j][index] = 0.0;  // Poner la columna correspondiente de la matriz K en 0
-                }
-                K[index][index] = 1.0;  // Establecer la diagonal en 1 para mantener la solución
-                F[index] = bc->dirichlet[i];  // Establecer el valor en el vector de solución
-            } else {
-                // printf("Condición Dirichlet %d: None\n", i);
+        for (int i = 0; i < NCDirichlet; i++) {
+            int index = bc->dirichletNodes[i] - 1; // Usa el nodo específico para la condición de Dirichlet
+            for (int j = 0; j < NNodes; j++) {
+                K[index][j] = 0.0;  // Poner la fila correspondiente de la matriz K en 0
+                K[j][index] = 0.0;  // Poner la columna correspondiente de la matriz K en 0
             }
+            K[index][index] = 1.0;  // Establecer la diagonal en 1 para mantener la solución
+            F[index] = bc->dirichletValues[i];  // Establecer el valor en el vector de solución
         }
 
         // Aplicación de condiciones de Neumann
-        for (int i = 0; i < 2; i++) {
-        if (bc->neumannValid[i]) {
-            // Aplicar en el inicio (i=0) o al final (i=1) del dominio
-            int index = (i == 0) ? 0 : NNodes-1;
-                // Si la condición de Neumann es en el inicio, se suma el valor al vector F
-                if (i == 0) {
-                    F[index] += bc->neumann[i]; // Sumar al inicio
-                } else { // Si es al final, puede que necesites restarlo, dependiendo de tu formulación específica
-                    F[index] -= bc->neumann[i]; // Restar al final
-                }
-            } else {
-                // printf("Condición Neumann %d: None\n", i);
-            }
+        for (int i = 0; i < NCNeumann; i++) {
+            int index = bc->neumannNodes[i] - 1; // Usa el nodo específico para la condición de Neumann
+            // Aplicar el valor de la condición de Neumann al vector F en el nodo específico
+            F[index] += bc->neumannValues[i]; // Sumar el valor de Neumann
         }
-
     }
 
     // printf("Matrix de rigidez\n");
@@ -436,8 +429,8 @@ int main(int argc, char *argv[]){
         }
 
         // Coordenadas de los nodos 
-        x1 = nodos[conect[0] - 1];
-        x2 = nodos[conect[1] - 1];
+        x1 = nodos[conect[0] - 1][0];
+        x2 = nodos[conect[1] - 1][0];
         // printf("%lf, %lf\n", x1, x2);
 
         // Calculo de la matriz M elemental
@@ -508,7 +501,7 @@ int main(int argc, char *argv[]){
 
     #pragma endregion
 
-    #pragma region Paso 9. Solución sistema M q = P
+    #pragma region Paso 8.2 Solución sistema M q = P
 
     // Aplanar la matriz
     double *MFlat = malloc(NNodes * NNodes * sizeof(double));
@@ -540,7 +533,8 @@ int main(int argc, char *argv[]){
         free(elementos[i]); // Libera cada fila de la matriz
     }
     free(elementos); // Libera el arreglo de filas
-    free(nodos); 
+    freeMatrix(nodos, NNodes); 
+    free(Materials);
     freeMatrix(NEval, dim);
     freeMatrix(NEvalT, NNodes_Elemento);
     freeMatrix(DNDE, dim);
@@ -552,7 +546,13 @@ int main(int argc, char *argv[]){
     free(FElemental);
     free(F);
     free(Phi);
+
+    free(bc->dirichletNodes);
+    free(bc->dirichletValues);
+    free(bc->neumannNodes);
+    free(bc->neumannValues);
     free(bc);
+
     free(KFlat);
     
     // free(L);
