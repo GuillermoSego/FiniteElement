@@ -384,8 +384,8 @@ int main(int argc, char *argv[]){
     //     printf("La solución encontrada no es correcta.\n");
     // }
 
-    printf("La solución del sistema\n");
-    VectorShow(NNodes, 1, Phi);
+    // printf("La solución del sistema\n");
+    // VectorShow(NNodes, 1, Phi);
 
     #pragma endregion
 
@@ -520,9 +520,15 @@ int main(int argc, char *argv[]){
     //     printf("La solución de flujo encontrada no es correcta.\n");
     // }
 
-    printf("La solución del sistema q\n");
-    VectorShow(NNodes, 1, q);
+    // printf("La solución del sistema q\n");
+    // VectorShow(NNodes, 1, q);
 
+    #pragma endregion
+
+    #pragma region Escribir solución res
+
+    // Escribimos la solución en un archivo
+    WriteResults(filename_dat, Phi, q, NNodes, dim);
 
     #pragma endregion
 

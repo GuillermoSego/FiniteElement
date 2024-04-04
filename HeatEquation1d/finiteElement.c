@@ -354,3 +354,71 @@ int dim, int NNodes, int NElements, int NNodes_Elemento) {
 
     fclose(file);
 }
+
+// Función que escribe los resultados en un archivo .post.res
+void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim) {
+
+    // Encontrar la última ocurrencia del punto en el nombre del archivo
+    char *dotPosition = strrchr(filename, '.');
+    if (dotPosition == NULL) {
+        printf("Error: No se encontró una extensión de archivo válida.\n");
+        return;
+    }
+
+    // Calcular la longitud del nombre base del archivo (sin la extensión)
+    int baseNameLength = dotPosition - filename;
+
+    // Preparar el nuevo nombre del archivo con la nueva extensión
+    char *nameRes = (char *)malloc(baseNameLength + 10); // Asumiendo que ".post.res" + NULL cabe
+    if (nameRes == NULL) {
+        printf("Error: No se pudo asignar memoria para el nuevo nombre del archivo.\n");
+        return;
+    }
+
+    // Copiar la parte base del nombre y agregar la nueva extensión
+    snprintf(nameRes, baseNameLength + 10, "%.*s.post.res", baseNameLength, filename);
+
+    // Continuar con la creación del archivo y la escritura de resultados...
+    FILE *file = fopen(nameRes, "w");
+
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        free(nameRes);
+        return;
+    }
+
+    // Escribir el encabezado del archivo .post.res
+    fprintf(file, "GiD Post Results File 1.0\n\n");
+
+    // Escribir los resultados de temperatura
+    fprintf(file, "Result \"Temperature\" \"Load Case 1\" 1 Scalar OnNodes\n");
+    fprintf(file, "ComponentNames \"T\"\n");
+    fprintf(file, "Values\n");
+
+    for (int i = 1; i <= NNodes; ++i) {
+        fprintf(file, "%d %lf\n", i, Phi[i-1]);
+    }
+
+    fprintf(file, "End Values\n\n");
+
+    // Si 'q' y 'dim' se van a usar para representar el flujo promedio o valores por nodo,
+    // se puede agregar una sección similar a la de la temperatura.
+
+    // Supongamos que 'q' es un valor promedio y queremos escribirlo también
+    // Nota: Cambia esta parte según cómo quieras manejar 'q' y 'dim'.
+    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Scalar OnNodes\n");
+    fprintf(file, "ComponentNames \"q\"\n");
+    fprintf(file, "Values\n");
+
+    // Escribir el mismo valor de q
+    for (int i = 1; i <= NNodes; ++i) {
+        fprintf(file, "%d %lf\n", i, q[i-1]);
+    }
+
+    fprintf(file, "End Values\n");
+
+    // Cerrar el archivo
+    fclose(file);
+
+
+}

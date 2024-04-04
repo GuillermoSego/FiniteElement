@@ -51,3 +51,6 @@ int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann);
 // Rutina que lee la malla y da los parámetros del problema
 void Mesh(const char *filename, double **nodos, int** elementos, unsigned int* Materials, 
 int dim, int NNodes, int NElements, int NNodes_Elemento);
+
+// Función que escribe los resultados en un archivo .post.res
+void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim);
