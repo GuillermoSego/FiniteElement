@@ -438,6 +438,9 @@ void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int 
 
     fprintf(file, "End Values\n");
 
+    // Liberar memoria
+    free(nameRes);
+
     // Cerrar el archivo
     fclose(file);
 
