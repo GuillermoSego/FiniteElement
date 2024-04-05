@@ -43,9 +43,12 @@ int main(int argc, char *argv[]){
     // int NNodes_Elemento = 2; // Nodos por elemento
 
     int dim, NNodes, NElements, NNodes_Elemento, NMaterials, NCDirichlet, NCNeumann;
+    char* ElementType = NULL;
 
-    ProblemDef(filename_dat, &dim, &NNodes, &NElements, &NMaterials, &NNodes_Elemento, 
+    ProblemDef(filename_dat, &dim, &NNodes, &NElements, &NMaterials, &ElementType, &NNodes_Elemento, 
     &NCDirichlet, &NCNeumann);
+
+    // printf("Tipo de elemento: %s", ElementType);
 
     double** nodos = createMatrix(NNodes, dim); // Matriz para almacenar las coordendas de los nodos
     int** elementos = malloc( NElements * sizeof(int *)); // Matriz para almacenar la conexión entre nodos para cada elemento
@@ -529,12 +532,18 @@ int main(int argc, char *argv[]){
 
     // Escribimos la solución en un archivo
     WriteResults(filename_dat, Phi, q, NNodes, dim);
+    
+    // Escribimos la malla
+    WriteMesh(filename_dat, elementos, nodos, NNodes, NElements, NNodes_Elemento, dim, ElementType);
 
     #pragma endregion
 
     #pragma region Liberar memoria
 
     // Liberar la memoria
+    if (ElementType != NULL) {
+        free(ElementType);
+    }
     for (int i = 0; i < NElements; i++) {
         free(elementos[i]); // Libera cada fila de la matriz
     }

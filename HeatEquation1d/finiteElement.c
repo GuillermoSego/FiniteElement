@@ -130,8 +130,9 @@ BoundaryConditions* readConditions(const char *filename, int NCDirichlet, int NC
     return bc;
 }
 
+// Rutina que lee la malla y da los parámetros del problema
 void ProblemDef(const char *filename, int* dim, int* NNodes, int* NElements, int* NMaterials, 
-int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann) {
+char** ElemType, int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann) {
 
     FILE *file = fopen(filename, "r");
     char line[256];
@@ -173,6 +174,26 @@ int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann) {
         else if (strstr(line, "NUMERO_DE_MATERIALES:")) {
             if (sscanf(line, "NUMERO_DE_MATERIALES: %d", NMaterials) != 1) {
                 printf("Error al leer el número de materiales\n");
+                fclose(file);
+                return;
+            }
+        }
+        // Analizar el tipo de elementos en la malla
+        else if (strstr(line, "TIPO_DE_ELEMENTOS_EN_LA_MALLA:")) {
+            // Extrae primero el tipo de elemento en un buffer temporal
+            char tempType[100]; // Asegúrate de que este tamaño sea suficiente
+            if (sscanf(line, "TIPO_DE_ELEMENTOS_EN_LA_MALLA: %99s", tempType) == 1) {
+                // Asigna memoria para ElemType
+                *ElemType = malloc(strlen(tempType) + 1); // +1 para el carácter nulo
+                if (*ElemType != NULL) {
+                    strcpy(*ElemType, tempType); // Copia la cadena al espacio asignado
+                } else {
+                    printf("Error al asignar memoria para el tipo de elementos\n");
+                    fclose(file);
+                    return;
+                }
+            } else {
+                printf("Error al leer el tipo de elementos en la malla\n");
                 fclose(file);
                 return;
             }
@@ -421,4 +442,68 @@ void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int 
     fclose(file);
 
 
+}
+
+// Función que escribe la malla
+void WriteMesh(const char *filename, int** elementos, double **nodos, int NNodes, int NElements, 
+int NNodes_Elemento, int dim, const char *ElementType) {
+
+    // Encontrar la última ocurrencia del punto en el nombre del archivo
+    char *dotPosition = strrchr(filename, '.');
+    if (dotPosition == NULL) {
+        printf("Error: No se encontró una extensión de archivo válida.\n");
+        return;
+    }
+
+    // Calcular la longitud del nombre base del archivo (sin la extensión)
+    int baseNameLength = dotPosition - filename;
+
+    // Preparar el nuevo nombre del archivo con la nueva extensión
+    char *nameRes = (char *)malloc(baseNameLength + 5); // ".msh" + NULL
+    if (nameRes == NULL) {
+        printf("Error: No se pudo asignar memoria para el nuevo nombre del archivo.\n");
+        return;
+    }
+
+    // Copiar la parte base del nombre y agregar la nueva extensión
+    snprintf(nameRes, baseNameLength + 5, "%.*s.msh", baseNameLength, filename);
+
+    // Abrir el archivo para escritura
+    FILE *file = fopen(nameRes, "w");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        free(nameRes);
+        return;
+    }
+
+    // Escribir el encabezado del archivo
+    fprintf(file, "MESH dimension %d ElemType %s Nnode %d\n", dim, ElementType, NNodes_Elemento);
+    fprintf(file, "Coordinates\n");
+
+    // Escribir las coordenadas de los nodos
+    for (int i = 0; i < NNodes; i++) {
+        fprintf(file, "%5d", i + 1); // Los índices de nodo comienzan en 1
+        for (int j = 0; j < dim; j++) {
+            fprintf(file, " %15.8e", nodos[i][j]);
+        }
+        fprintf(file, "\n");
+    }
+
+    fprintf(file, "End Coordinates\n\n");
+    fprintf(file, "Elements\n");
+
+    // Escribir los elementos
+    for (int i = 0; i < NElements; i++) {
+        fprintf(file, "%5d", i + 1); // Los índices de elemento comienzan en 1
+        for (int j = 0; j < NNodes_Elemento; j++) {
+            fprintf(file, " %5d", elementos[i][j]);
+        }
+        fprintf(file, "\n");
+    }
+
+    fprintf(file, "End Elements\n");
+
+    // Cerrar el archivo y liberar memoria
+    fclose(file);
+    free(nameRes);
 }
