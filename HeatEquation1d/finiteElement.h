@@ -52,6 +52,9 @@ char** ElemType, int* NNodes_Elemento, int* NCDirichlet, int* NCNewmann);
 void Mesh(const char *filename, double **nodos, int** elementos, unsigned int* Materials, 
 int dim, int NNodes, int NElements, int NNodes_Elemento);
 
+// Función que lee las propiedades del material
+void ReadMaterial(const char *filename, double* D, int NMaterials);
+
 // Función que escribe los resultados en un archivo .post.res
 void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim);
 

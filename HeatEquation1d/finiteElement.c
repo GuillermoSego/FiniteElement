@@ -376,6 +376,55 @@ int dim, int NNodes, int NElements, int NNodes_Elemento) {
     fclose(file);
 }
 
+// Función que lee las propiedades del material
+void ReadMaterial(const char *filename, double* D, int NMaterials){
+    FILE *file = fopen(filename, "r");
+    char line[256];
+
+    if (file == NULL) {
+        printf("No se pudo abrir el archivo '%s'\n", filename);
+        return;
+    }
+
+    unsigned int readingMat = 0;
+    
+    while (fgets(line, sizeof(line), file) != NULL) {
+        
+        // printf("%s", line);
+
+        if (strstr(line, "End Materials")) {
+            readingMat = 0;
+            continue;
+        }
+
+        if (strstr(line, "Materials")) {
+            readingMat = 1;
+        }
+
+        if (readingMat == 1) {
+
+            fgets(line, sizeof(line), file); // Información sobre el material
+
+            // Leer las propiedades de los materiales
+            for (int i = 0; i < NMaterials; i++) {
+
+                // Salta el número del material
+                fscanf(file, "%*d");
+
+                // Leer el valor de la conductividad térmica
+                if (fscanf(file, "%lf", &D[i]) != 1) { 
+                    fclose(file);
+                    return; // Error de lectura
+                }
+                
+            }
+
+        }
+
+    }
+    fclose(file);
+}
+
 // Función que escribe los resultados en un archivo .post.res
 void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim) {
 

@@ -187,8 +187,11 @@ int main(int argc, char *argv[]){
     // Inicializamos K elemental
     double** KElemental = createMatrix(NNodes_Elemento, NNodes_Elemento);
 
-    // Inicializamos D material, en este caso un solo valor
-    double D = 1.0;
+    // Inicializamos D material, es un arreglo con el valor de la conductividad térmica en c/mat
+    double* D = malloc(NMaterials * sizeof(double));
+
+    // Leemos el material
+    ReadMaterial(filename_dat, D, NMaterials);
 
     // Definimos la matriz jacobiana
     // double **J = createMatrix(dim, dim); // No es necesario, solo hay una dimensión
@@ -231,6 +234,7 @@ int main(int argc, char *argv[]){
             conect[w] = elementos[k][w];
         }
 
+        // Coordenadas del nodo
         x1 = nodos[conect[0] - 1][0];
         x2 = nodos[conect[1] - 1][0];
         // printf("%lf, %lf\n", x1, x2);
@@ -246,7 +250,7 @@ int main(int argc, char *argv[]){
         // MatrixShow(NNodes_Elemento, dim, BT);
 
         // Multiplicación por D
-        MatriXEscalar(B, D, dim, NNodes_Elemento);
+        MatriXEscalar(B, D[Materials[k] - 1], dim, NNodes_Elemento);
 
         // Cálculo de KElemental = \int B^T D B
         MatrixProduct(BT, B, KElemental, NNodes_Elemento, dim, NNodes_Elemento);
@@ -460,7 +464,7 @@ int main(int argc, char *argv[]){
         BuildB1d(B, DNDE, x1, x2, dim, NNodes_Elemento);
 
         // Multiplicación por D
-        MatriXEscalar(B, D, dim, NNodes_Elemento);
+        MatriXEscalar(B, D[Materials[k] - 1], dim, NNodes_Elemento);
 
         // Construcción de Phi elemental
         for(int i = 0; i<NNodes_Elemento; i++){
@@ -550,6 +554,7 @@ int main(int argc, char *argv[]){
     free(elementos); // Libera el arreglo de filas
     freeMatrix(nodos, NNodes); 
     free(Materials);
+    free(D);
     freeMatrix(NEval, dim);
     freeMatrix(NEvalT, NNodes_Elemento);
     freeMatrix(DNDE, dim);
