@@ -585,13 +585,16 @@ int main(int argc, char *argv[]){
     freeMatrix(nodos, NNodes); 
     free(Materials);
     free(D);
-    freeMatrix(NEval, dim);
+    freeMatrix(NEval, 1);
     freeMatrix(NEvalT, NNodes_Elemento);
     freeMatrix(DNDE, dim);
     freeMatrix(K, NNodes);
     freeMatrix(B, dim);
     freeMatrix(BT, NNodes_Elemento);
     freeMatrix(KElemental, NNodes_Elemento);
+    freeMatrix(coord, dim);
+    freeMatrix(J, dim);
+    freeMatrix(Jinv, dim);
     free(conect);
     free(FElemental);
     free(F);
