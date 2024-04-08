@@ -1,0 +1,28 @@
+PROBLEM DATA
+BOOK: General_settings
+QUESTION: Gravity_acceleration#UNITS#
+VALUE: 9.80665m/s^2
+STATE: HIDDEN
+QUESTION: Problem_Type#CB#(Wireframes,Plane-Solid,Rev-Solid,3D-Shells,3D-Solid)
+VALUE: Wireframes
+QUESTION: Numerical_scheme#CB#(FEM,DEC)
+VALUE: FEM
+help: DEC only works with meshes composed by 2-node lines, linear triangles or linear tetrahedron. Mixed meshes are not allowed.
+QUESTION: Solution_type#CB#(Stationary,Transient)
+VALUE: Stationary
+DEPENDENCIES: (Stationary,HIDE,Alpha_parameter,#CURRENT#,HIDE,Initial_time,#CURRENT#,HIDE,Final_time,#CURRENT#,HIDE,Time_step_size,#CURRENT#,HIDE,Step_time_size_to_plot,#CURRENT#)
+DEPENDENCIES: (Transient,RESTORE,Alpha_parameter,#CURRENT#,RESTORE,Initial_time,#CURRENT#,RESTORE,Final_time,#CURRENT#,RESTORE,Time_step_size,#CURRENT#,RESTORE,Step_time_size_to_plot,#CURRENT#)
+QUESTION: Alpha_parameter#CB#(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
+VALUE: 0.0
+help: This parameter is for the step-by-step sulution. Zero value indicates an explicit method, other values uses an implicit method
+QUESTION: Initial_time
+VALUE: 0.0
+QUESTION: Final_time
+VALUE: 1.0
+QUESTION: Time_step_size
+VALUE: 0.01
+QUESTION: Step_time_size_to_plot
+VALUE: 0.10
+END PROBLEM DATA
+INTERVAL DATA
+END INTERVAL DATA

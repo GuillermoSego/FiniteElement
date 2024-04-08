@@ -54,7 +54,6 @@ Newmann
 End Newmann
 
 Materials:
-#__/Nombre____/CONDUCTIVIDAD_TERMICA
-  1    2.3700000000000000e+02
-  
+#__/Nombre____/ESPESOR/DENSIDAD/CALOR_DE_MASA_/_CONDUCTIVIDAD_TERMICA
+  1        Aluminium           1.0000000000000000e+00           2.7000000000000000e+03           0.0000000000000000e+00             237.0000000000000000
 End Materials
