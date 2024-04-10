@@ -468,7 +468,7 @@ int dim, int NNodes, int NElements, int NNodes_Elemento) {
 }
 
 // Función que lee las propiedades del material
-void ReadMaterial(const char *filename, double* D, int NMaterials){
+void ReadMaterial(const char *filename, double* D, double* Q,int NMaterials){
     FILE *file = fopen(filename, "r");
     char line[256];
 
@@ -507,6 +507,12 @@ void ReadMaterial(const char *filename, double* D, int NMaterials){
                     fclose(file);
                     return; // Error de lectura
                 }
+                // Leer el valor de la fuente de masa
+                if (fscanf(file, "%lf", &Q[i]) != 1) { 
+                    fclose(file);
+                    return; // Error de lectura
+                }
+
                 
             }
 

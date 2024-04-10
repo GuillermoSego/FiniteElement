@@ -168,9 +168,10 @@ int main(int argc, char *argv[]){
 
     // Inicializamos D material, es un arreglo con el valor de la conductividad térmica en c/mat
     double* D = malloc(NMaterials * sizeof(double));
+    double* Q = malloc(NMaterials * sizeof(double)); // Calor de masa
 
     // Leemos el material
-    ReadMaterial(filename_dat, D, NMaterials);
+    ReadMaterial(filename_dat, D, Q, NMaterials);
 
     // Definimos la matriz jacobiana
     double **J = createMatrix(dim, dim);
@@ -190,7 +191,7 @@ int main(int argc, char *argv[]){
     double* F = calloc( NNodes, sizeof(double));
 
     // Valor de Q. Calor emanado por la barra
-    double Q = 5.0;
+    // double Q = 5.0;
 
     // Definimos el vector solución Phi
     double* Phi = calloc( NNodes, sizeof(double));
@@ -301,7 +302,7 @@ int main(int argc, char *argv[]){
 
 
         // Construcción F elemental = N^T * Q * detJ
-        BuildF(FElemental, NEval, Q, detJ, NNodes_Elemento);
+        BuildF(FElemental, NEval, Q[Materials[k] - 1], detJ, NNodes_Elemento);
         // printf("Vector F elemental \n");
         // VectorShow(NNodes_Elemento, 1, FElemental);
 
@@ -585,6 +586,7 @@ int main(int argc, char *argv[]){
     freeMatrix(nodos, NNodes); 
     free(Materials);
     free(D);
+    free(Q);
     freeMatrix(NEval, 1);
     freeMatrix(NEvalT, NNodes_Elemento);
     freeMatrix(DNDE, dim);
