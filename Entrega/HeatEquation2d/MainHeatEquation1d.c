@@ -1,6 +1,7 @@
 
 /*
-Programa para resolver el método de elementos finitos en dos dimensiones. Este programa
+Programa para resolver el método de elementos finitos en una dimensión. Trabajamos con una malla
+equidistante (esto puede cambiar). Con un número de nodos fijos por cada elemento. Este programa
 no puede trabajar con mallas conformadas por diferentes elementos.
 
 Guillermo Segura Gómez
@@ -27,8 +28,19 @@ int main(int argc, char *argv[]){
     #pragma region Paso 1. Formulación del problema.
 
     /*
+    Necesitamos escanear los archivos de la malla generada y definir el problema.
+    Utilizamos memoria dinámica para trabajar con los vectores que no conocemos. 
+
     Paso 1. Formulación del problema.
+    En este caso trabajamos con la ecuación de calor. Para aplicar el método de los elementos 
+    finitos, primero necesitamos establecer condiciones iniciales y de borde para la ecuación.
     */
+
+    // Declaración de variables del sistema
+    // int NElements = 9; // Número de elementos es siempre NNodes - 1 para una malla 1D
+    // int NNodes = NElements + 1; // Número de nodos
+    // int dim = 1;
+    // int NNodes_Elemento = 2; // Nodos por elemento
 
     int dim, NNodes, NElements, NNodes_Elemento, NMaterials, NCDirichlet, NCNeumann;
     char* ElementType = NULL;
@@ -59,6 +71,18 @@ int main(int argc, char *argv[]){
 
     // Leemos la malla
     Mesh(filename_dat, nodos, elementos, Materials, dim, NNodes, NElements, NNodes_Elemento);
+
+    // Leemos la matriz de nodos
+    // if (ReadVector(filename_Nodes, nodos, NNodes) == 1) {
+    //     free(nodos); // Liberamos memoria
+    //     return 0;
+    // }
+
+    // // Leemos la matriz de conexiones
+    // if (ReadMatrix(filename_Connections, elementos, NElements, NNodes_Elemento) == 1) {
+    //     free(elementos); // Liberamos memoria
+    //     return 0;
+    // }
 
 
     // Mostrar las conexiones de los elementos
@@ -93,54 +117,51 @@ int main(int argc, char *argv[]){
     */
 
     // Vector para almacenar las funciones de las funciones de forma
-    double (*N[NNodes_Elemento])(double, double);
+    double (*N[NNodes_Elemento])(double);
 
     // Asignar las funciones al vector
     N[0] = N1;
     N[1] = N2;
-    N[2] = N3;
 
     // Vector para almacenar las funciones de derivadas de las funciones de forma
-    double (*dN_dxi[NNodes_Elemento])(double, double);
+    double (*dN_dxi[NNodes_Elemento])(double);
 
     // Asignar las funciones de derivadas al vector
     dN_dxi[0] = dN1de;
     dN_dxi[1] = dN2de;
-    dN_dxi[2] = dN3de;
-    dN_dxi[3] = dN1dn;
-    dN_dxi[4] = dN2dn;
-    dN_dxi[5] = dN3dn;
 
-
-    double xi = 1.0/3.0; // Punto de Gauss
+    double xi = 0.0; // Punto de Gauss
 
     // Evaluar las funciones en los puntos de gauss
-    double **NEval = createMatrix(1, NNodes_Elemento);
+    double **NEval = createMatrix(dim, NNodes_Elemento);
     for (int i = 0; i < NNodes_Elemento; i++) {
-        NEval[0][i] = N[i](xi, xi); 
+        NEval[0][i] = N[i](xi); 
     }
 
-    double **NEvalT = createMatrix(NNodes_Elemento, 1);
-    MatrixT(1, NNodes_Elemento, NEval, NEvalT);
+    double **NEvalT = createMatrix(NNodes_Elemento, dim);
+    MatrixT(dim, NNodes_Elemento, NEval, NEvalT);
 
     // Vector para almacenar los valores de las derivadas evaluadas en los puntos de Gauss
     double **DNDE = createMatrix(dim, NNodes_Elemento);
 
-    for(int j = 0; j<dim; j++){    
-        for (int i = 0; i < NNodes_Elemento; i++) {
-            DNDE[j][i] = dN_dxi[i+3*j](xi, xi); // Calcular y almacenar las derivadas
-        }
+    for (int i = 0; i < NNodes_Elemento; i++) {
+        DNDE[0][i] = dN_dxi[i](xi); // Calcular y almacenar las derivadas
     }
 
     // printf("Las derivadas de las funciones de forma \n");
-    // MatrixShow(dim, NNodes_Elemento, DNDE);
+    // for (int i = 0; i < NNodes_Elemento; i++){
+    //     printf("%lf \n", DNDE[0][i]);
+    // }
 
     #pragma endregion
 
     #pragma region Paso 4 y 5. Construcción de matrices y ensamble 
 
     /*
-    Paso 4. Transformamos la ecuación diferencial en su forma débil. 
+    Paso 4. Transformamos la ecuación diferencial en su forma débil. Esto implica multiplicar 
+    la ecuación diferencial por una función de prueba v, integrar sobre el dominio, y aplicar 
+    la integración por partes para reducir el orden de las derivadas. Esto nos da una formulación 
+    en términos de los valores de la solución en los nodos, más manejable para la solución numérica.
     */
 
     /*
@@ -168,19 +189,12 @@ int main(int argc, char *argv[]){
 
     // Inicializamos D material, es un arreglo con el valor de la conductividad térmica en c/mat
     double* D = malloc(NMaterials * sizeof(double));
-    double* Q = malloc(NMaterials * sizeof(double)); // Calor de masa
 
     // Leemos el material
-    ReadMaterial(filename_dat, D, Q, NMaterials);
-
-    // printf("Valores de la Q para %d materiales\n", NMaterials);
-    // for(int i = 0; i<NMaterials; i++){
-    //     printf("Material %d: Q: %lf\n", i+1, Q[i]);
-    // }
+    ReadMaterial(filename_dat, D, NMaterials);
 
     // Definimos la matriz jacobiana
-    double **J = createMatrix(dim, dim);
-    double **Jinv = createMatrix(dim, dim);
+    // double **J = createMatrix(dim, dim); // No es necesario, solo hay una dimensión
 
     /* 
     La parte derecha de la ecuación K PHI = F 
@@ -196,7 +210,7 @@ int main(int argc, char *argv[]){
     double* F = calloc( NNodes, sizeof(double));
 
     // Valor de Q. Calor emanado por la barra
-    // double Q = 5.0;
+    double Q = 5.0;
 
     // Definimos el vector solución Phi
     double* Phi = calloc( NNodes, sizeof(double));
@@ -211,11 +225,6 @@ int main(int argc, char *argv[]){
    int* conect = malloc(NNodes_Elemento*sizeof(int));
    double x1, x2; // Coordenadas actuales
 
-   // Definimos una matriz para las coordenadas
-   double **coord = createMatrix(dim, NNodes_Elemento);
-   double detJ = 0.0;
-
-   double wi = 2.0; // Pesos de Gauss
 
     // Iteramos sobre el total de los elementos
     for (int k = 0; k<NElements; k++){
@@ -226,34 +235,17 @@ int main(int argc, char *argv[]){
         }
 
         // Coordenadas del nodo
-        for(int a = 0; a<dim; a++){
-            for(int b = 0; b<NNodes_Elemento; b++){
-                coord[a][b] = nodos[conect[b] - 1][a];
-            }
-        }
+        x1 = nodos[conect[0] - 1][0];
+        x2 = nodos[conect[1] - 1][0];
+        // printf("%lf, %lf\n", x1, x2);
 
-        // printf("Iteración %d\n", k);
-        // MatrixShow(dim, NNodes_Elemento, coord);
+        // Calculo de la matriz B
+        BuildB1d(B, DNDE, x1, x2, dim, NNodes_Elemento);
 
-        // Construimos la matriz Jacobiana
-        BuildJacobian(J, DNDE, coord, dim, NNodes_Elemento);
-
-        // printf("Jacobiano\n");
-        // MatrixShow(dim, dim, J);
-
-        // Calculamos el determinante del jacobiano
-        detJ = DetJacobian(J, dim);
-
-        // Calculamos la inversa del jacobiano
-        InvJacobian(J, Jinv, detJ, dim);
-
-        // Calculo de la matriz B = Jinv*DNDE
-        MatrixProduct(Jinv, DNDE, B, dim, dim, NNodes_Elemento);
-        
         // Calculo matriz B^T
         MatrixT(dim, NNodes_Elemento, B, BT);
 
-        // printf("Iteración %d\n", k);
+        // printf("Iteración %d\n", i);
         // MatrixShow(dim, NNodes_Elemento, B);
         // MatrixShow(NNodes_Elemento, dim, BT);
 
@@ -263,34 +255,6 @@ int main(int argc, char *argv[]){
         // Cálculo de KElemental = \int B^T D B
         MatrixProduct(BT, B, KElemental, NNodes_Elemento, dim, NNodes_Elemento);
         
-        // Multiplicación por el determinante del jacobiano y los pesos
-        MatriXEscalar(K, detJ*wi, NNodes_Elemento, NNodes_Elemento);
-
-        /*
-        Si queremos trabajar con un elemento con mas puntos de Gauss tenemos
-        que hacer un ciclo por cada punto y cada uno contribuye a la matriz K
-        */
-    
-        // for (int pg = 0; pg < 3; pg++) {  // Asumiendo 3 puntos de Gauss
-        //     double xi = GaussPoints[pg].xi;
-        //     double eta = GaussPoints[pg].eta;
-        //     double weight = GaussPoints[pg].weight;
-
-        //     // Evaluar DNDE, construir J y Jinv, y calcular detJ para este punto de Gauss
-        //     // ...
-
-        //     // Calcular B y BT para este punto de Gauss
-        //     // ...
-
-        //     // Calcular la contribución de este punto de Gauss a KElemental
-        //     for (int i = 0; i < NNodes_Elemento; i++) {
-        //         for (int j = 0; j < NNodes_Elemento; j++) {
-        //             for (int m = 0; m < dim; m++) {
-        //                 KElemental[i][j] += BT[m][i] * D * B[m][j] * detJ * weight;
-        //             }
-        //         }
-        //     }
-
         // printf("Iteración %d\n", k);
 
         // printf("Matriz K elemental \n");
@@ -306,8 +270,8 @@ int main(int argc, char *argv[]){
         }
 
 
-        // Construcción F elemental = N^T * Q * detJ
-        BuildF(FElemental, NEval, Q[Materials[k] - 1], detJ, NNodes_Elemento);
+        // Construcción F elemental
+        BuildF1d(FElemental, NEval, Q, x1, x2, NNodes_Elemento);
         // printf("Vector F elemental \n");
         // VectorShow(NNodes_Elemento, 1, FElemental);
 
@@ -471,30 +435,16 @@ int main(int argc, char *argv[]){
             conect[w] = elementos[k][w]; // Encontrar las conectividades
         }
 
-        // Coordenadas del nodo
-        for(int a = 0; a<dim; a++){
-            for(int b = 0; b<NNodes_Elemento; b++){
-                coord[a][b] = nodos[conect[b] - 1][a];
-            }
-        }
-
-        // printf("Iteración %d\n", k);
-        // MatrixShow(dim, NNodes_Elemento, coord);
-
-        // Construimos la matriz Jacobiana
-        BuildJacobian(J, DNDE, coord, dim, NNodes_Elemento);
-
-        // printf("Jacobiano\n");
-        // MatrixShow(dim, dim, J);
-
-        // Calculamos el determinante del jacobiano
-        detJ = DetJacobian(J, dim);
+        // Coordenadas de los nodos 
+        x1 = nodos[conect[0] - 1][0];
+        x2 = nodos[conect[1] - 1][0];
+        // printf("%lf, %lf\n", x1, x2);
 
         // Calculo de la matriz M elemental
-        MatrixProduct(NEvalT, NEval, MElemental, NNodes_Elemento, 1, NNodes_Elemento);
+        MatrixProduct(NEvalT, NEval, MElemental, NNodes_Elemento, dim, NNodes_Elemento);
 
         // Multiplicación por el determinante del jacobiano
-        MatriXEscalar(MElemental, detJ, NNodes_Elemento, NNodes_Elemento);
+        MatriXEscalar(MElemental, detJacobian1d(x1, x2), NNodes_Elemento, NNodes_Elemento);
 
         // printf("Iteración %d\n", k);
         // MatrixShow(NNodes_Elemento, NNodes_Elemento, MElemental);
@@ -510,11 +460,8 @@ int main(int argc, char *argv[]){
 
         // Cálculo de q en los puntos de gauss
 
-        // Calculamos la inversa del jacobiano
-        InvJacobian(J, Jinv, detJ, dim);
-
-        // Calculo de la matriz B = Jinv*DNDE
-        MatrixProduct(Jinv, DNDE, B, dim, dim, NNodes_Elemento);
+        // Matrix B
+        BuildB1d(B, DNDE, x1, x2, dim, NNodes_Elemento);
 
         // Multiplicación por D
         MatriXEscalar(B, D[Materials[k] - 1], dim, NNodes_Elemento);
@@ -541,10 +488,10 @@ int main(int argc, char *argv[]){
         // VectorShow(dim, 1, q_gp);
 
         // Construcción de P elemental
-        FlattenMatrix(NEvalT, NNodes_Elemento, 1, NEvalTFlat);
+        FlattenMatrix(NEvalT, NNodes_Elemento, dim, NEvalTFlat);
         VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
         // Multiplicamos por el jacobiano
-        Divide(PElemental, 1.0/detJ, PElemental, NNodes_Elemento);
+        Divide(PElemental, 1.0/detJacobian1d(x1, x2), PElemental, NNodes_Elemento);
         
         // Ensamble de P
         for(int i = 0; i<NNodes_Elemento; i++){
@@ -608,17 +555,13 @@ int main(int argc, char *argv[]){
     freeMatrix(nodos, NNodes); 
     free(Materials);
     free(D);
-    free(Q);
-    freeMatrix(NEval, 1);
+    freeMatrix(NEval, dim);
     freeMatrix(NEvalT, NNodes_Elemento);
     freeMatrix(DNDE, dim);
     freeMatrix(K, NNodes);
     freeMatrix(B, dim);
     freeMatrix(BT, NNodes_Elemento);
     freeMatrix(KElemental, NNodes_Elemento);
-    freeMatrix(coord, dim);
-    freeMatrix(J, dim);
-    freeMatrix(Jinv, dim);
     free(conect);
     free(FElemental);
     free(F);
@@ -647,7 +590,5 @@ int main(int argc, char *argv[]){
 
     #pragma endregion
 
-
-return 0;
-
+    return 0;
 }

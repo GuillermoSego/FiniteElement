@@ -101,7 +101,7 @@ QUESTION: Kz'
 VALUE: 237
 HELP: This value should not be zero nor negative
 QUESTION: Orientation(i,j,k,angle)
-VALUE: #N# 4 1.0 0.0 0.0 0.0
+VALUE: #N# 4 1.0 0.0 0.0 0.0 
 HELP: Indicates material orientation respect global axes, giving a vector and an angle respect vector in degrees. Not necessary to be an unitary vector
 TITLE: Anisotropy
 QUESTION: D11
