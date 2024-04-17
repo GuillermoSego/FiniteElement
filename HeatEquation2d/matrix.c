@@ -505,7 +505,7 @@ void FlattenMatrix(double **matrix, int rows, int cols, double *flat) {
 // Rutina que implementa el metodo del gradiente
 void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols){
     double error_threshold = 0.0001;
-    double alpha, beta, r_dot, r_next_dot;
+    double alpha, beta, r_dot, r_next_dot = 0;
 
     double *r = (double *)malloc(rows * sizeof(double));
     double *r_next = (double *)malloc(rows * sizeof(double));

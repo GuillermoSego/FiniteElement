@@ -315,7 +315,7 @@ int main(int argc, char *argv[]){
     
         // Ensamble de F
         for(int i = 0; i<NNodes_Elemento; i++){
-            F[i + k] += FElemental[i];
+            F[conect[i] - 1] += FElemental[i];
         }
         
 
@@ -450,7 +450,7 @@ int main(int argc, char *argv[]){
 
     // Inicializamos P y P elemental
     double* PElemental = malloc( NNodes_Elemento * sizeof(double));
-    double* P = calloc( NNodes, sizeof(double));
+    double* P = calloc( NNodes * dim, sizeof(double));
 
     // Phi elemental
     double* PhiElemental = malloc(NNodes_Elemento * sizeof(double));
@@ -478,8 +478,6 @@ int main(int argc, char *argv[]){
             }
         }
 
-        // printf("Iteración %d\n", k);
-        // MatrixShow(dim, NNodes_Elemento, coord);
 
         // Construimos la matriz Jacobiana
         BuildJacobian(J, DNDE, coord, dim, NNodes_Elemento);
@@ -494,7 +492,7 @@ int main(int argc, char *argv[]){
         MatrixProduct(NEvalT, NEval, MElemental, NNodes_Elemento, 1, NNodes_Elemento);
 
         // Multiplicación por el determinante del jacobiano
-        MatriXEscalar(MElemental, detJ, NNodes_Elemento, NNodes_Elemento);
+        MatriXEscalar(MElemental, detJ*wi, NNodes_Elemento, NNodes_Elemento);
 
         // printf("Iteración %d\n", k);
         // MatrixShow(NNodes_Elemento, NNodes_Elemento, MElemental);
@@ -521,14 +519,14 @@ int main(int argc, char *argv[]){
 
         // Construcción de Phi elemental
         for(int i = 0; i<NNodes_Elemento; i++){
-            PhiElemental[i] = Phi[i + k];
+            PhiElemental[i] = Phi[conect[i] - 1];
         }
 
         // printf("Iteración %d\n", k);
         // printf("Phi Elemental\n");
         // VectorShow(NNodes_Elemento, 1, PhiElemental);
 
-        // Calculo de p_gp
+        // Calculo de q_pg
         FlattenMatrix(B, dim, NNodes_Elemento, BFlat);
 
         // printf("B\n");
@@ -541,23 +539,46 @@ int main(int argc, char *argv[]){
         // VectorShow(dim, 1, q_gp);
 
         // Construcción de P elemental
-        FlattenMatrix(NEvalT, NNodes_Elemento, 1, NEvalTFlat);
-        VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
-        // Multiplicamos por el jacobiano
-        Divide(PElemental, 1.0/detJ, PElemental, NNodes_Elemento);
-        
-        // Ensamble de P
-        for(int i = 0; i<NNodes_Elemento; i++){
-            P[i + k] += PElemental[i];
+
+        for(int j = 0; j < dim; j++){
+
+
+            // Aplanamos en P Elemental            
+            FlattenMatrix(NEvalT, NNodes_Elemento, 1, PElemental);
+
+            // Calculamos el producto por cada dimension
+            Divide(PElemental, detJ*q_gp[j], PElemental, NNodes_Elemento);
+
+            printf("Iteración %d\n", k);
+            // MatrixShow(NNodes_Elemento, 1, NEvalT);
+            VectorShow(NNodes_Elemento, 1, PElemental);
+
+            // Ensamble de P por dimension
+            for(int i = 0; i<NNodes_Elemento; i++){
+                P[conect[i] - 1 + j*NNodes_Elemento] += PElemental[i];
+            }
+
+
         }
+        
+
+        // FlattenMatrix(NEvalT, NNodes_Elemento, 1, NEvalTFlat);
+        // VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
+        // // Multiplicamos por el jacobiano
+        // Divide(PElemental, 1.0/detJ, PElemental, NNodes_Elemento);
+        
+        // // Ensamble de P
+        // for(int i = 0; i<NNodes_Elemento; i++){
+        //     P[conect[i] - 1] += PElemental[i];
+        // }
         
     }
 
     // printf("Matrix de masa\n");
     // MatrixShow(NNodes, NNodes, M);
 
-    // printf("Vector de promedios\n");
-    // VectorShow(NNodes, 1, P);  
+    printf("Vector de promedios\n");
+    VectorShow(NNodes, 2, P);  
 
     #pragma endregion
 

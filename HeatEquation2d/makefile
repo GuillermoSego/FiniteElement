@@ -16,9 +16,9 @@ OBJS = $(patsubst %,$(OBJECT_DIR)/%,$(_OBJS))
 # Target Build
 all : $(LINK_TARGET)
 
-# Linker command
+# Linker command with math library inclusion
 $(LINK_TARGET) : $(OBJS)
-	gcc -g -o $@ $^
+	gcc -g -o $@ $^ -lm
 
 # Create the directory structure if it doesn't exist
 $(OBJECT_DIR):
