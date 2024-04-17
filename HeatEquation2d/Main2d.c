@@ -458,10 +458,9 @@ int main(int argc, char *argv[]){
     // q en los puntos de gauss
     double* q_gp = malloc(dim * sizeof(double));
     double* BFlat = malloc(NNodes_Elemento * dim * sizeof(double));
-    double* NEvalTFlat = malloc(NNodes_Elemento * dim * sizeof(double));
 
     // q en los nodos
-    double* q = calloc( NNodes, sizeof(double));
+    double* q = calloc( NNodes * dim, sizeof(double));
 
     // Nuevamente iteramos sobre el total de los elementos
     for (int k = 0; k<NElements; k++){
@@ -539,7 +538,6 @@ int main(int argc, char *argv[]){
         // VectorShow(dim, 1, q_gp);
 
         // Construcción de P elemental
-
         for(int j = 0; j < dim; j++){
 
 
@@ -547,49 +545,57 @@ int main(int argc, char *argv[]){
             FlattenMatrix(NEvalT, NNodes_Elemento, 1, PElemental);
 
             // Calculamos el producto por cada dimension
-            Divide(PElemental, detJ*q_gp[j], PElemental, NNodes_Elemento);
+            VectorXEscalar(PElemental, detJ*q_gp[j], PElemental, NNodes_Elemento);
 
-            printf("Iteración %d\n", k);
-            // MatrixShow(NNodes_Elemento, 1, NEvalT);
-            VectorShow(NNodes_Elemento, 1, PElemental);
+            // printf("Iteración %d, dimensión %d\n", k, j);
+            // VectorShow(NNodes_Elemento, 1, PElemental);
 
             // Ensamble de P por dimension
             for(int i = 0; i<NNodes_Elemento; i++){
-                P[conect[i] - 1 + j*NNodes_Elemento] += PElemental[i];
+                P[(conect[i] - 1) + j*NNodes] += PElemental[i];
             }
 
 
         }
-        
-
-        // FlattenMatrix(NEvalT, NNodes_Elemento, 1, NEvalTFlat);
-        // VectorProduct(NEvalTFlat, q_gp, PElemental, NNodes_Elemento, dim, 1);
-        // // Multiplicamos por el jacobiano
-        // Divide(PElemental, 1.0/detJ, PElemental, NNodes_Elemento);
-        
-        // // Ensamble de P
-        // for(int i = 0; i<NNodes_Elemento; i++){
-        //     P[conect[i] - 1] += PElemental[i];
-        // }
         
     }
 
     // printf("Matrix de masa\n");
     // MatrixShow(NNodes, NNodes, M);
 
-    printf("Vector de promedios\n");
-    VectorShow(NNodes, 2, P);  
+    // printf("Vector de promedios\n");
+    // VectorShow(NNodes, 2, P);  
 
     #pragma endregion
 
     #pragma region Paso 8.2 Solución sistema M q = P
 
+    // Arreglos temporales para almacenar P y q
+    double *PTemp = malloc( NNodes * sizeof(double));
+    double *qTemp = malloc( NNodes * sizeof(double));
+
     // Aplanar la matriz
     double *MFlat = malloc(NNodes * NNodes * sizeof(double));
     FlattenMatrix(M, NNodes, NNodes, MFlat);
 
-    // Método del gradiente conjugado
-    Conjugate_gradient(MFlat, P, q, NNodes, NNodes);
+    // Resolver utilizando el método del gradiente conjugado
+    for(int i = 0; i<dim; i++){
+
+        for(int j = 0; j<NNodes; j++){
+            // Copiamos en PTemp
+            PTemp[j] = P[j + i*NNodes];
+        }
+
+        // Método del gradiente conjugado
+        Conjugate_gradient(MFlat, PTemp, qTemp, NNodes, NNodes);
+
+        for(int j = 0; j<NNodes; j++){
+            // Copiamos la solución en q
+            q[j + i*NNodes] = qTemp[j];
+        }
+
+    }
+
 
     // Checar si tenemos solución
     // double tolerance = 1e-3;
@@ -602,7 +608,7 @@ int main(int argc, char *argv[]){
     // }
 
     // printf("La solución del sistema q\n");
-    // VectorShow(NNodes, 1, q);
+    // VectorShow(NNodes, 2, q);
 
     #pragma endregion
 
@@ -659,12 +665,14 @@ int main(int argc, char *argv[]){
     freeMatrix(M, NNodes);
     free(PElemental);
     free(BFlat);
-    free(NEvalTFlat);
     free(P);
     free(PhiElemental);
     free(q_gp);
     free(q);
     free(MFlat);
+
+    free(PTemp);
+    free(qTemp);
 
     #pragma endregion
 

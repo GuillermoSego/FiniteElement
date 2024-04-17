@@ -573,13 +573,15 @@ void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int 
 
     // Supongamos que 'q' es un valor promedio y queremos escribirlo también
     // Nota: Cambia esta parte según cómo quieras manejar 'q' y 'dim'.
-    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Scalar OnNodes\n");
-    fprintf(file, "ComponentNames \"q\"\n");
+    // Escribir cabecera para resultados de flujos en dos dimensiones
+    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Vector OnNodes\n");
+    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
     fprintf(file, "Values\n");
 
-    // Escribir el mismo valor de q
+    // Escribir los valores de flujo en dos dimensiones
     for (int i = 1; i <= NNodes; ++i) {
-        fprintf(file, "%d %lf\n", i, q[i-1]);
+        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
+        fprintf(file, "%d %lf %lf\n", i, q[index], q[index + 1]);
     }
 
     fprintf(file, "End Values\n");

@@ -387,6 +387,26 @@ void Divide(double matrix[], double scalar, double out[], int s)
 
 }
 
+// Este programa multiplica un arreglo por un escalar
+void VectorXEscalar(double matrix[], double scalar, double out[], int s)
+{
+
+  double* mPtr = matrix;
+  double* outPtr = out;
+  int i = 0;
+
+  do {
+
+    *outPtr = *mPtr * scalar;
+    outPtr ++;
+    mPtr ++;
+
+    i ++;
+
+  } while( i < s );
+
+}
+
 // Esta rutina inicializa un arreglo de unos
 void Ones(double t[], int n)
 {

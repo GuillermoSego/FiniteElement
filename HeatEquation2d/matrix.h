@@ -45,6 +45,9 @@ void MatriXEscalar(double** mat, double x, int rows, int cols);
 // Este programa divide un arreglo por un escalar
 void Divide(double matrix[], double scalar, double out[], int s);
 
+// Este programa multiplica un arreglo por un escalar
+void VectorXEscalar(double matrix[], double scalar, double out[], int s);
+
 // Esta rutina inicializa un arreglo de unos
 void Ones(double t[], int n);
 
