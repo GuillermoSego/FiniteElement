@@ -456,7 +456,8 @@ int main(int argc, char *argv[]){
     double* PhiElemental = malloc(NNodes_Elemento * sizeof(double));
 
     // q en los puntos de gauss
-    double* q_gp = malloc(dim * sizeof(double));
+    double* q_gpElemental = malloc(dim * sizeof(double));
+    double* q_gp = malloc(NElements * dim * sizeof(double));
     double* BFlat = malloc(NNodes_Elemento * dim * sizeof(double));
 
     // q en los nodos
@@ -531,11 +532,16 @@ int main(int argc, char *argv[]){
         // printf("B\n");
         // VectorShow(dim, NNodes_Elemento, BFlat);
 
-        VectorProduct(BFlat, PhiElemental, q_gp, dim, NNodes_Elemento, 1);
+        VectorProduct(BFlat, PhiElemental, q_gpElemental, dim, NNodes_Elemento, 1);
+
+        // Llenamos q_pg
+        for(int i = 0; i<dim; i++){
+            q_gp[k + i*NElements] = q_gpElemental[i];
+        }
 
         // printf("Iteración %d\n", k);
         // printf("Q_pg\n");
-        // VectorShow(dim, 1, q_gp);
+        // VectorShow(dim, 1, q_gpElemental);
 
         // Construcción de P elemental
         for(int j = 0; j < dim; j++){
@@ -545,7 +551,7 @@ int main(int argc, char *argv[]){
             FlattenMatrix(NEvalT, NNodes_Elemento, 1, PElemental);
 
             // Calculamos el producto por cada dimension
-            VectorXEscalar(PElemental, detJ*q_gp[j], PElemental, NNodes_Elemento);
+            VectorXEscalar(PElemental, detJ*q_gpElemental[j], PElemental, NNodes_Elemento);
 
             // printf("Iteración %d, dimensión %d\n", k, j);
             // VectorShow(NNodes_Elemento, 1, PElemental);
@@ -565,6 +571,9 @@ int main(int argc, char *argv[]){
 
     // printf("Vector de promedios\n");
     // VectorShow(NNodes, 2, P);  
+
+    // printf("Vector de flujo en los puntos de Gauss\n");
+    // VectorShow(NElements, 2, q_gp);  
 
     #pragma endregion
 
@@ -615,7 +624,7 @@ int main(int argc, char *argv[]){
     #pragma region Escribir solución res
 
     // Escribimos la solución en un archivo
-    WriteResults(filename_dat, Phi, q, NNodes, dim);
+    WriteResults(filename_dat, Phi, q, q_gp, NNodes, NElements, dim);
     
     // Escribimos la malla
     WriteMesh(filename_dat, elementos, nodos, NNodes, NElements, NNodes_Elemento, dim, ElementType);
@@ -667,7 +676,7 @@ int main(int argc, char *argv[]){
     free(BFlat);
     free(P);
     free(PhiElemental);
-    free(q_gp);
+    free(q_gpElemental);
     free(q);
     free(MFlat);
 

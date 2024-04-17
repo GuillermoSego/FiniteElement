@@ -523,7 +523,7 @@ void ReadMaterial(const char *filename, double* D, double* Q,int NMaterials){
 }
 
 // Función que escribe los resultados en un archivo .post.res
-void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim) {
+void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, int NNodes, int NElements, int dim) {
 
     // Encontrar la última ocurrencia del punto en el nombre del archivo
     char *dotPosition = strrchr(filename, '.');
@@ -582,6 +582,19 @@ void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int 
     for (int i = 1; i <= NNodes; ++i) {
         int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
         fprintf(file, "%d %lf %lf\n", i, q[index], q[index + 1]);
+    }
+
+    fprintf(file, "End Values\n");
+
+    // Escribir cabecera para resultados de flujos en dos dimensiones en elementos
+    fprintf(file, "Result \"Element Average Flow\" \"Load Case 1\" 1 Vector OnGaussPoints\n");
+    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
+    fprintf(file, "Values\n");
+
+    // Escribir los valores de flujo en dos dimensiones para cada elemento
+    for (int i = 1; i <= NElements; ++i) {
+        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
+        fprintf(file, "%d %lf %lf\n", i, q_pg[index], q_pg[index + 1]);
     }
 
     fprintf(file, "End Values\n");

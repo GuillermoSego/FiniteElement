@@ -9,11 +9,11 @@ Values
 4 -nan
 End Values
 
-Result "Average Flow" "Load Case 1" 1 Scalar OnNodes
-ComponentNames "q"
+Result "Average Flow" "Load Case 1" 1 Vector OnNodes
+ComponentNames "q_x", "q_y"
 Values
-1 -nan
-2 -nan
-3 -nan
-4 -nan
+1 -nan -nan
+2 -nan -nan
+3 -nan -nan
+4 -nan -nan
 End Values
