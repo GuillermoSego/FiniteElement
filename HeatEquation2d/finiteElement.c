@@ -557,6 +557,25 @@ void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, in
     // Escribir el encabezado del archivo .post.res
     fprintf(file, "GiD Post Results File 1.0\n\n");
 
+    // Definir los puntos de Gauss
+    fprintf(file, "GaussPoints \"Triangular Gauss Points\" ElemType Triangle\n");
+    fprintf(file, "  Number Of Gauss Points: 3\n");
+    fprintf(file, "  Natural Coordinates: Internal\n");
+    fprintf(file, "End GaussPoints\n");
+
+    // Escribir cabecera para resultados de flujos en dos dimensiones en elementos
+    fprintf(file, "Result \"Element Average Flow\" \"Load Case 1\" 1 Vector OnGaussPoints \"Triangular Gauss Points\"\n");
+    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
+    fprintf(file, "Values\n");
+
+    // Escribir los valores de flujo en dos dimensiones para cada elemento
+    for (int i = 1; i <= NElements; ++i) {
+        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
+        fprintf(file, "%d %lf %lf\n", i, q_pg[index], q_pg[index + 1]);
+    }
+
+    fprintf(file, "End Values\n\n");
+
     // Escribir los resultados de temperatura
     fprintf(file, "Result \"Temperature\" \"Load Case 1\" 1 Scalar OnNodes\n");
     fprintf(file, "ComponentNames \"T\"\n");
@@ -582,19 +601,6 @@ void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, in
     for (int i = 1; i <= NNodes; ++i) {
         int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
         fprintf(file, "%d %lf %lf\n", i, q[index], q[index + 1]);
-    }
-
-    fprintf(file, "End Values\n");
-
-    // Escribir cabecera para resultados de flujos en dos dimensiones en elementos
-    fprintf(file, "Result \"Element Average Flow\" \"Load Case 1\" 1 Vector OnGaussPoints\n");
-    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
-    fprintf(file, "Values\n");
-
-    // Escribir los valores de flujo en dos dimensiones para cada elemento
-    for (int i = 1; i <= NElements; ++i) {
-        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
-        fprintf(file, "%d %lf %lf\n", i, q_pg[index], q_pg[index + 1]);
     }
 
     fprintf(file, "End Values\n");

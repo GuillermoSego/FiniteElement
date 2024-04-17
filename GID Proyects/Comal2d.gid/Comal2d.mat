@@ -86,7 +86,7 @@ HELP: This value should not be zero nor negative
 QUESTION: Density#UNITS#
 VALUE: 2700kg/m^3
 QUESTION: Mass_source_Q
-VALUE: 10.0
+VALUE: 10
 QUESTION: Thickness#UNITS#
 VALUE: 1m
 HELP: For wireframes, this value is the area of section. The value is ignored for 3D-Solid problems.
@@ -101,7 +101,7 @@ QUESTION: Kz'
 VALUE: 237
 HELP: This value should not be zero nor negative
 QUESTION: Orientation(i,j,k,angle)
-VALUE: #N# 4 1.0 0.0 0.0 0.0
+VALUE: #N# 4 1.0 0.0 0.0 0.0 
 HELP: Indicates material orientation respect global axes, giving a vector and an angle respect vector in degrees. Not necessary to be an unitary vector
 TITLE: Anisotropy
 QUESTION: D11
