@@ -86,7 +86,7 @@ HELP: This value should not be zero nor negative
 QUESTION: Density#UNITS#
 VALUE: 2700kg/m^3
 QUESTION: Mass_source_Q
-VALUE: 10
+VALUE: 10.0
 QUESTION: Thickness#UNITS#
 VALUE: 1m
 HELP: For wireframes, this value is the area of section. The value is ignored for 3D-Solid problems.

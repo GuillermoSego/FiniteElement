@@ -45,6 +45,9 @@ void MatriXEscalar(double** mat, double x, int rows, int cols);
 // Este programa divide un arreglo por un escalar
 void Divide(double matrix[], double scalar, double out[], int s);
 
+// Este programa multiplica un arreglo por un escalar
+void VectorXEscalar(double matrix[], double scalar, double out[], int s);
+
 // Esta rutina inicializa un arreglo de unos
 void Ones(double t[], int n);
 
@@ -75,8 +78,8 @@ void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols);
 // Rutina que indica si un vector X es solución de un sistema Ax = b
 int isSolution(double *A, double *X, double *b, int size, double tolerance);
 
-// Incializar una matriz cuadrada en ceros
-void Matrix_Initialize(double** A, int size);
+// Incializar una matriz en ceros
+void Matrix_Initialize(double** A, int rows, int cols);
 
 // Función para resolver un sistema Ax = b dado L en la descomposición Cholesky A = LL^T
 void solveCholesky(double L[], double b[], double x[], int n);

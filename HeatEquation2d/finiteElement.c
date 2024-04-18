@@ -24,14 +24,14 @@ void MallaGeneratorEquidist(int Dim, int NElements, double* malla, double x_0, d
 }
 
 // Funciones de forma para elementos lineales 2D
-double N1(double ei, double n) {
-    return (1.0 - ei - n);
+double N1(double xi, double eta) {
+    return 1 - xi - eta;
 }
-double N2(double ei, double n) {
-    return (ei);
+double N2(double xi, double eta) {
+    return xi;
 }
-double N3(double ei, double n) {
-    return (n);
+double N3(double xi, double eta) {
+    return eta;
 }
 
 double dN1de(double ei, double n) {

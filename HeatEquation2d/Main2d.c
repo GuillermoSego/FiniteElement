@@ -100,6 +100,14 @@ int main(int argc, char *argv[]){
     N[1] = N2;
     N[2] = N3;
 
+    double xi = (1.0/3.0); // Punto de Gauss
+
+    // Evaluar las funciones en los puntos de gauss
+    double **NEval = createMatrix(1, NNodes_Elemento);
+    for (int i = 0; i < NNodes_Elemento; i++) {
+        NEval[0][i] = N[i](xi, xi); 
+    }
+
     // Vector para almacenar las funciones de derivadas de las funciones de forma
     double (*dN_dxi[NNodes_Elemento])(double, double);
 
@@ -111,15 +119,6 @@ int main(int argc, char *argv[]){
     dN_dxi[4] = dN2dn;
     dN_dxi[5] = dN3dn;
 
-
-    double xi = 1.0/3.0; // Punto de Gauss
-
-    // Evaluar las funciones en los puntos de gauss
-    double **NEval = createMatrix(1, NNodes_Elemento);
-    for (int i = 0; i < NNodes_Elemento; i++) {
-        NEval[0][i] = N[i](xi, xi); 
-    }
-
     double **NEvalT = createMatrix(NNodes_Elemento, 1);
     MatrixT(1, NNodes_Elemento, NEval, NEvalT);
 
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]){
 
     for(int j = 0; j<dim; j++){    
         for (int i = 0; i < NNodes_Elemento; i++) {
-            DNDE[j][i] = dN_dxi[i+3*j](xi, xi); // Calcular y almacenar las derivadas
+            DNDE[j][i] = dN_dxi[i + NNodes_Elemento*j](xi, xi); // Calcular y almacenar las derivadas
         }
     }
 
@@ -509,6 +508,9 @@ int main(int argc, char *argv[]){
                 M[conect[i] - 1][conect[j] - 1] += MElemental[i][j];
             }
         }
+        // printf("Iteración %d\n", k);
+        // printf("M Elemental\n");
+        // MatrixShow(NNodes_Elemento, NNodes_Elemento, MElemental);
 
         // Cálculo de q en los puntos de gauss
 
@@ -546,29 +548,38 @@ int main(int argc, char *argv[]){
 
         // printf("Iteración %d\n", k);
         // printf("Q_pg\n");
-        // VectorShow(dim, 1, q_gpElemental);
+        // VectorShow(dim, 1, q_gpElemental);        
+
+        // printf("NEvalT \n");
+        // VectorShow(NNodes_Elemento, 1, PElemental);
+        // printf("qpg \n");
+        // VectorShow(1, dim, q_gpElemental);
+        // printf("Det Jacobiano: %lf\n", detJ);        
 
         // Construcción de P elemental
         for(int j = 0; j < dim; j++){
-
 
             // Aplanamos en P Elemental            
             FlattenMatrix(NEvalT, NNodes_Elemento, 1, PElemental);
 
             // Calculamos el producto por cada dimension
-            VectorXEscalar(PElemental, detJ*q_gpElemental[j], PElemental, NNodes_Elemento);
+            VectorXEscalar(PElemental, detJ*q_gpElemental[j]*wi, PElemental, NNodes_Elemento);
 
             // printf("Iteración %d, dimensión %d\n", k, j);
             // VectorShow(NNodes_Elemento, 1, PElemental);
 
             // Ensamble de P por dimension
             for(int i = 0; i<NNodes_Elemento; i++){
-                P[(conect[i] - 1)][j] += PElemental[i];
+                P[conect[i] - 1][j] += PElemental[i];
                 // printf("%lf\n", PElemental[i]);
             }
 
 
         }
+
+        // if(k == 5){
+        //     break;
+        // }
         
     }
 
@@ -622,8 +633,8 @@ int main(int argc, char *argv[]){
     //     printf("La solución de flujo encontrada no es correcta.\n");
     // }
 
-    printf("La solución del sistema q\n");
-    MatrixShow(NNodes, 2, q);
+    // printf("La solución del sistema q\n");
+    // MatrixShow(NNodes, 2, q);
 
     #pragma endregion
 

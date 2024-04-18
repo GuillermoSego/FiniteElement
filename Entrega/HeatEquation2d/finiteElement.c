@@ -24,14 +24,14 @@ void MallaGeneratorEquidist(int Dim, int NElements, double* malla, double x_0, d
 }
 
 // Funciones de forma para elementos lineales 2D
-double N1(double ei, double n) {
-    return (1.0 - ei - n);
+double N1(double xi, double eta) {
+    return 1 - xi - eta;
 }
-double N2(double ei, double n) {
-    return (ei);
+double N2(double xi, double eta) {
+    return xi;
 }
-double N3(double ei, double n) {
-    return (n);
+double N3(double xi, double eta) {
+    return eta;
 }
 
 double dN1de(double ei, double n) {
@@ -523,7 +523,7 @@ void ReadMaterial(const char *filename, double* D, double* Q,int NMaterials){
 }
 
 // Función que escribe los resultados en un archivo .post.res
-void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim) {
+void WriteResults(const char *filename, double *Phi, double **q, double **q_pg, int NNodes, int NElements, int dim) {
 
     // Encontrar la última ocurrencia del punto en el nombre del archivo
     char *dotPosition = strrchr(filename, '.');
@@ -568,18 +568,37 @@ void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int 
 
     fprintf(file, "End Values\n\n");
 
-    // Si 'q' y 'dim' se van a usar para representar el flujo promedio o valores por nodo,
-    // se puede agregar una sección similar a la de la temperatura.
+    // Asignar valores por defecto para la componente z en caso de que dim sea 2
+    double default_z = 0.0;
 
-    // Supongamos que 'q' es un valor promedio y queremos escribirlo también
-    // Nota: Cambia esta parte según cómo quieras manejar 'q' y 'dim'.
-    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Scalar OnNodes\n");
-    fprintf(file, "ComponentNames \"q\"\n");
+    // Resultados de flujos en elementos en puntos de Gauss
+    fprintf(file, "Result \"Element_Fluxes\" \"Load Case 1\" 1 Vector OnGaussPoints \"GP_ELEMENT_1\"\n");
+    fprintf(file, "ComponentNames \"Flux_x\", \"Flux_y\", \"Flux_z\"\n");
     fprintf(file, "Values\n");
 
-    // Escribir el mismo valor de q
-    for (int i = 1; i <= NNodes; ++i) {
-        fprintf(file, "%d %lf\n", i, q[i-1]);
+    for (int i = 0; i < NElements; i++) {  // Asumiendo que los índices de elementos empiezan en 0
+        // Escribe dos componentes si dim es 2, y tres si dim es 3
+        if (dim == 2) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q_pg[i][0], q_pg[i][1], default_z);
+        } else if (dim == 3) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q_pg[i][0], q_pg[i][1], q_pg[i][2]);
+        }
+    }
+
+    fprintf(file, "End Values\n\n");
+
+    // Resultados de flujos promedio en nodos
+    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Vector OnNodes\n");
+    fprintf(file, "ComponentNames \"Flux_x\", \"Flux_y\", \"Flux_z\"\n");
+    fprintf(file, "Values\n");
+
+    for (int i = 0; i < NNodes; i++) {  // Asumiendo que los índices de nodos empiezan en 0
+        // Escribe dos componentes si dim es 2, y tres si dim es 3
+        if (dim == 2) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q[i][0], q[i][1], default_z);
+        } else if (dim == 3) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q[i][0], q[i][1], q[i][2]);
+        }
     }
 
     fprintf(file, "End Values\n");

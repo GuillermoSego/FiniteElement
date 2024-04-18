@@ -387,6 +387,26 @@ void Divide(double matrix[], double scalar, double out[], int s)
 
 }
 
+// Este programa multiplica un arreglo por un escalar
+void VectorXEscalar(double matrix[], double scalar, double out[], int s)
+{
+
+  double* mPtr = matrix;
+  double* outPtr = out;
+  int i = 0;
+
+  do {
+
+    *outPtr = *mPtr * scalar;
+    outPtr ++;
+    mPtr ++;
+
+    i ++;
+
+  } while( i < s );
+
+}
+
 // Esta rutina inicializa un arreglo de unos
 void Ones(double t[], int n)
 {
@@ -505,7 +525,7 @@ void FlattenMatrix(double **matrix, int rows, int cols, double *flat) {
 // Rutina que implementa el metodo del gradiente
 void Conjugate_gradient(double *A, double *B, double *x, int rows, int cols){
     double error_threshold = 0.0001;
-    double alpha, beta, r_dot, r_next_dot;
+    double alpha, beta, r_dot, r_next_dot = 0;
 
     double *r = (double *)malloc(rows * sizeof(double));
     double *r_next = (double *)malloc(rows * sizeof(double));
@@ -575,12 +595,12 @@ int isSolution(double *A, double *X, double *b, int size, double tolerance) {
     return 0;  // Si todas las componentes son cercanas, X es solución
 }
 
-// Incializar una matriz cuadrada en ceros
-void Matrix_Initialize(double** A, int size){
+// Incializar una matriz en ceros
+void Matrix_Initialize(double** A, int rows, int cols){
 
     // Inicializar la matriz a cero
-    for(int i = 0; i < size; i++) {
-        for(int j = 0; j < size; j++) {
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
             A[i][j] = 0;
         }
     }

@@ -5,9 +5,9 @@
 void MallaGeneratorEquidist(int Dim, int NElements, double* malla, double x_0, double x_n);
 
 // Funciones de forma para elementos lineales 2D
-double N1(double ei, double n);
-double N2(double ei, double n);
-double N3(double ei, double n);
+double N1(double xi, double eta);
+double N2(double xi, double eta);
+double N3(double xi, double eta);
 
 double dN1de(double ei, double n);
 double dN2de(double ei, double n);
@@ -71,7 +71,7 @@ int dim, int NNodes, int NElements, int NNodes_Elemento);
 void ReadMaterial(const char *filename, double* D, double* Q,int NMaterials);
 
 // Función que escribe los resultados en un archivo .post.res
-void WriteResults(const char *filename, double *Phi, double *q, int NNodes, int dim);
+void WriteResults(const char *filename, double *Phi, double **q, double **q_pg, int NNodes, int NElements, int dim);
 
 // Función que escribe la malla
 void WriteMesh(const char *filename, int** elementos, double **nodos, int NNodes, int NElements, 
