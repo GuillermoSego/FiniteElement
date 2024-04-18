@@ -149,7 +149,7 @@ int main(int argc, char *argv[]){
 
     // Inicializamos la matriz K de rigidez
     double** K = createMatrix(NNodes, NNodes);
-    Matrix_Initialize(K, NNodes); // Inicializamos a cero
+    Matrix_Initialize(K, NNodes, NNodes); // Inicializamos a cero
 
     // Inicializamos la matriz B
     double** B = createMatrix(dim, NNodes_Elemento);
@@ -446,22 +446,26 @@ int main(int argc, char *argv[]){
     // Inicializamos M y M elemental
     double** MElemental = createMatrix(NNodes_Elemento, NNodes_Elemento);
     double** M = createMatrix(NNodes, NNodes);
-    Matrix_Initialize(M, NNodes); // Inicializamos a cero
+    Matrix_Initialize(M, NNodes, NNodes); // Inicializamos a cero
 
     // Inicializamos P y P elemental
     double* PElemental = malloc( NNodes_Elemento * sizeof(double));
-    double* P = calloc( NNodes * dim, sizeof(double));
+    // double* P = calloc( NNodes * dim, sizeof(double));
+    double **P = createMatrix(NNodes, dim);
+    Matrix_Initialize(P, NNodes, dim);
 
     // Phi elemental
     double* PhiElemental = malloc(NNodes_Elemento * sizeof(double));
 
     // q en los puntos de gauss
     double* q_gpElemental = malloc(dim * sizeof(double));
-    double* q_gp = malloc(NElements * dim * sizeof(double));
+    // double* q_gp = malloc(NElements * dim * sizeof(double));
+    double** q_gp = createMatrix(NElements, dim);
     double* BFlat = malloc(NNodes_Elemento * dim * sizeof(double));
 
     // q en los nodos
-    double* q = calloc( NNodes * dim, sizeof(double));
+    double** q = createMatrix(NNodes, dim);
+    Matrix_Initialize(q, NNodes, dim);
 
     // Nuevamente iteramos sobre el total de los elementos
     for (int k = 0; k<NElements; k++){
@@ -536,7 +540,8 @@ int main(int argc, char *argv[]){
 
         // Llenamos q_pg
         for(int i = 0; i<dim; i++){
-            q_gp[k + i*NElements] = q_gpElemental[i];
+            q_gp[k][i] = q_gpElemental[i];
+            // printf("%lf\n", q_gpElemental[i]);
         }
 
         // printf("Iteración %d\n", k);
@@ -558,7 +563,8 @@ int main(int argc, char *argv[]){
 
             // Ensamble de P por dimension
             for(int i = 0; i<NNodes_Elemento; i++){
-                P[(conect[i] - 1) + j*NNodes] += PElemental[i];
+                P[(conect[i] - 1)][j] += PElemental[i];
+                // printf("%lf\n", PElemental[i]);
             }
 
 
@@ -570,10 +576,10 @@ int main(int argc, char *argv[]){
     // MatrixShow(NNodes, NNodes, M);
 
     // printf("Vector de promedios\n");
-    // VectorShow(NNodes, 2, P);  
+    // MatrixShow(NNodes, 2, P);  
 
     // printf("Vector de flujo en los puntos de Gauss\n");
-    // VectorShow(NElements, 2, q_gp);  
+    // MatrixShow(NElements, 2, q_gp);  
 
     #pragma endregion
 
@@ -592,7 +598,7 @@ int main(int argc, char *argv[]){
 
         for(int j = 0; j<NNodes; j++){
             // Copiamos en PTemp
-            PTemp[j] = P[j + i*NNodes];
+            PTemp[j] = P[i][j];
         }
 
         // Método del gradiente conjugado
@@ -600,7 +606,7 @@ int main(int argc, char *argv[]){
 
         for(int j = 0; j<NNodes; j++){
             // Copiamos la solución en q
-            q[j + i*NNodes] = qTemp[j];
+            q[j][i] = qTemp[j];
         }
 
     }
@@ -616,8 +622,8 @@ int main(int argc, char *argv[]){
     //     printf("La solución de flujo encontrada no es correcta.\n");
     // }
 
-    // printf("La solución del sistema q\n");
-    // VectorShow(NNodes, 2, q);
+    printf("La solución del sistema q\n");
+    MatrixShow(NNodes, 2, q);
 
     #pragma endregion
 
@@ -674,10 +680,11 @@ int main(int argc, char *argv[]){
     freeMatrix(M, NNodes);
     free(PElemental);
     free(BFlat);
-    free(P);
+    freeMatrix(P, NNodes);
     free(PhiElemental);
     free(q_gpElemental);
-    free(q);
+    freeMatrix(q_gp, NElements);
+    freeMatrix(q, NNodes);
     free(MFlat);
 
     free(PTemp);

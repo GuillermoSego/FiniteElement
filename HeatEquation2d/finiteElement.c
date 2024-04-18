@@ -523,7 +523,7 @@ void ReadMaterial(const char *filename, double* D, double* Q,int NMaterials){
 }
 
 // Función que escribe los resultados en un archivo .post.res
-void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, int NNodes, int NElements, int dim) {
+void WriteResults(const char *filename, double *Phi, double **q, double **q_pg, int NNodes, int NElements, int dim) {
 
     // Encontrar la última ocurrencia del punto en el nombre del archivo
     char *dotPosition = strrchr(filename, '.');
@@ -557,25 +557,6 @@ void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, in
     // Escribir el encabezado del archivo .post.res
     fprintf(file, "GiD Post Results File 1.0\n\n");
 
-    // Definir los puntos de Gauss
-    fprintf(file, "GaussPoints \"Triangular Gauss Points\" ElemType Triangle\n");
-    fprintf(file, "  Number Of Gauss Points: 3\n");
-    fprintf(file, "  Natural Coordinates: Internal\n");
-    fprintf(file, "End GaussPoints\n");
-
-    // Escribir cabecera para resultados de flujos en dos dimensiones en elementos
-    fprintf(file, "Result \"Element Average Flow\" \"Load Case 1\" 1 Vector OnGaussPoints \"Triangular Gauss Points\"\n");
-    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
-    fprintf(file, "Values\n");
-
-    // Escribir los valores de flujo en dos dimensiones para cada elemento
-    for (int i = 1; i <= NElements; ++i) {
-        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
-        fprintf(file, "%d %lf %lf\n", i, q_pg[index], q_pg[index + 1]);
-    }
-
-    fprintf(file, "End Values\n\n");
-
     // Escribir los resultados de temperatura
     fprintf(file, "Result \"Temperature\" \"Load Case 1\" 1 Scalar OnNodes\n");
     fprintf(file, "ComponentNames \"T\"\n");
@@ -587,20 +568,37 @@ void WriteResults(const char *filename, double *Phi, double *q, double *q_pg, in
 
     fprintf(file, "End Values\n\n");
 
-    // Si 'q' y 'dim' se van a usar para representar el flujo promedio o valores por nodo,
-    // se puede agregar una sección similar a la de la temperatura.
+    // Asignar valores por defecto para la componente z en caso de que dim sea 2
+    double default_z = 0.0;
 
-    // Supongamos que 'q' es un valor promedio y queremos escribirlo también
-    // Nota: Cambia esta parte según cómo quieras manejar 'q' y 'dim'.
-    // Escribir cabecera para resultados de flujos en dos dimensiones
-    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Vector OnNodes\n");
-    fprintf(file, "ComponentNames \"q_x\", \"q_y\"\n");
+    // Resultados de flujos en elementos en puntos de Gauss
+    fprintf(file, "Result \"Element_Fluxes\" \"Load Case 1\" 1 Vector OnGaussPoints \"GP_ELEMENT_1\"\n");
+    fprintf(file, "ComponentNames \"Flux_x\", \"Flux_y\", \"Flux_z\"\n");
     fprintf(file, "Values\n");
 
-    // Escribir los valores de flujo en dos dimensiones
-    for (int i = 1; i <= NNodes; ++i) {
-        int index = (i - 1) * dim;  // Calcular el índice inicial en la matriz plana
-        fprintf(file, "%d %lf %lf\n", i, q[index], q[index + 1]);
+    for (int i = 0; i < NElements; i++) {  // Asumiendo que los índices de elementos empiezan en 0
+        // Escribe dos componentes si dim es 2, y tres si dim es 3
+        if (dim == 2) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q_pg[i][0], q_pg[i][1], default_z);
+        } else if (dim == 3) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q_pg[i][0], q_pg[i][1], q_pg[i][2]);
+        }
+    }
+
+    fprintf(file, "End Values\n\n");
+
+    // Resultados de flujos promedio en nodos
+    fprintf(file, "Result \"Average Flow\" \"Load Case 1\" 1 Vector OnNodes\n");
+    fprintf(file, "ComponentNames \"Flux_x\", \"Flux_y\", \"Flux_z\"\n");
+    fprintf(file, "Values\n");
+
+    for (int i = 0; i < NNodes; i++) {  // Asumiendo que los índices de nodos empiezan en 0
+        // Escribe dos componentes si dim es 2, y tres si dim es 3
+        if (dim == 2) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q[i][0], q[i][1], default_z);
+        } else if (dim == 3) {
+            fprintf(file, "%d %lf %lf %lf\n", i + 1, q[i][0], q[i][1], q[i][2]);
+        }
     }
 
     fprintf(file, "End Values\n");

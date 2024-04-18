@@ -595,12 +595,12 @@ int isSolution(double *A, double *X, double *b, int size, double tolerance) {
     return 0;  // Si todas las componentes son cercanas, X es solución
 }
 
-// Incializar una matriz cuadrada en ceros
-void Matrix_Initialize(double** A, int size){
+// Incializar una matriz en ceros
+void Matrix_Initialize(double** A, int rows, int cols){
 
     // Inicializar la matriz a cero
-    for(int i = 0; i < size; i++) {
-        for(int j = 0; j < size; j++) {
+    for(int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
             A[i][j] = 0;
         }
     }
